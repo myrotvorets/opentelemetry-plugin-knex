@@ -1,10 +1,10 @@
 /* eslint-disable no-invalid-this, @typescript-eslint/no-this-alias, @typescript-eslint/ban-types */
+import { Attributes, CanonicalCode, Span, SpanKind } from '@opentelemetry/api';
 import { BasePlugin } from '@opentelemetry/core';
 import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
 import type knexTypes from 'knex';
 import shimmer from 'shimmer';
 import path from 'path';
-import { Attributes, CanonicalCode, Span, SpanKind } from '@opentelemetry/api';
 
 interface KnexQuery {
     method?: string;
