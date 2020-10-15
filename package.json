@@ -1,6 +1,6 @@
 {
   "name": "@myrotvorets/opentelemetry-plugin-knex",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "OpenTelemetry knex automatic instrumentation package",
   "scripts": {
     "build": "tsc",
