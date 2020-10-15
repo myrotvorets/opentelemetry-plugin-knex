@@ -143,7 +143,7 @@ describe('KnexPlugin', () => {
 
                 const spans = memoryExporter.getFinishedSpans();
                 expect(spans).toHaveLength(3);
-                expect([...new Set(spans.map((span) => span.spanContext.traceId))]).toHaveLength(1);
+                expect([...new Set(spans.map((currentSpan) => currentSpan.spanContext.traceId))]).toHaveLength(1);
             });
         });
     });
@@ -156,7 +156,7 @@ describe('KnexPlugin', () => {
 
             const spans = memoryExporter.getFinishedSpans();
             expect(spans).toHaveLength(2);
-            expect([...new Set(spans.map((span) => span.spanContext.traceId))]).toHaveLength(1);
+            expect([...new Set(spans.map((currentSpan) => currentSpan.spanContext.traceId))]).toHaveLength(1);
         });
     });
 
