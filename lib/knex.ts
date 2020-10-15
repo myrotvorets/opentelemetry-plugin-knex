@@ -17,9 +17,14 @@ interface KnexQuery {
     sql: string;
 }
 
-const basedir = path.dirname(require.resolve('knex'));
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-var-requires
-const version = require(path.join(basedir, 'package.json')).version;
+interface IPackage {
+    name: string;
+    version: string;
+}
+
+const knexBaseDir = path.dirname(require.resolve('knex'));
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const knexVersion = (require(path.join(knexBaseDir, 'package.json')) as IPackage).version;
 
 const _STORED_PARENT_SPAN = Symbol('stored-parent-span');
 
@@ -27,7 +32,7 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
     public readonly supportedVersions = ['0.21.*'];
     public static readonly COMPONENT = 'knex';
 
-    protected readonly _basedir = basedir;
+    protected readonly _basedir = knexBaseDir;
     protected _internalFilesList = {
         '*': {
             client: 'lib/client',
@@ -115,4 +120,4 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
     }
 }
 
-export const plugin = new KnexPlugin('knex', version);
+export const plugin = new KnexPlugin('knex', knexVersion);
