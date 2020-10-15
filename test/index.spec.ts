@@ -1,3 +1,4 @@
+/* eslint-disable no-void */
 import { CanonicalCode, context } from '@opentelemetry/api';
 import { NoopLogger } from '@opentelemetry/core';
 import { NodeTracerProvider } from '@opentelemetry/node';
@@ -101,6 +102,61 @@ describe('KnexPlugin', () => {
                 expect(spans[0].status.message).toBe(e.message);
                 done();
             });
+        });
+    });
+
+    // See https://github.com/wdalmut/opentelemetry-plugin-mongoose/pull/34/files
+    it('should handle await on a thenable query object (raw)', () => {
+        const rootSpan = provider.getTracer('default').startSpan('test span');
+        return provider.getTracer('default').withSpan(rootSpan, async () => {
+            await connection.raw('SELECT 2+2');
+
+            const spans = memoryExporter.getFinishedSpans();
+            expect(spans.length).toBe(1);
+
+            expect(spans[0].spanContext.traceId).toEqual(rootSpan.context().traceId);
+            expect(spans[0].parentSpanId).toEqual(rootSpan.context().spanId);
+        });
+    });
+
+    it('should handle await on a thenable query object (query builder)', () => {
+        const rootSpan = provider.getTracer('default').startSpan('test span');
+        return provider.getTracer('default').withSpan(rootSpan, async () => {
+            await connection.select(connection.raw('2+2'));
+
+            const spans = memoryExporter.getFinishedSpans();
+            expect(spans.length).toBe(1);
+
+            expect(spans[0].spanContext.traceId).toEqual(rootSpan.context().traceId);
+            expect(spans[0].parentSpanId).toEqual(rootSpan.context().spanId);
+        });
+    });
+
+    it('should handle Promise.all', () => {
+        const span = provider.getTracer('default').startSpan('test span');
+        return provider.getTracer('default').withSpan(span, async () => {
+            return Promise.all([
+                await connection.select(connection.raw('2+2')),
+                await connection.select(connection.raw('3+3')),
+            ]).then(() => {
+                span.end();
+
+                const spans = memoryExporter.getFinishedSpans();
+                expect(spans).toHaveLength(3);
+                expect([...new Set(spans.map((span) => span.spanContext.traceId))]).toHaveLength(1);
+            });
+        });
+    });
+
+    it('should handle a combined operation with async/await', () => {
+        const span = provider.getTracer('default').startSpan('test span');
+        return provider.getTracer('default').withSpan(span, async () => {
+            await connection.select(connection.raw('2+2'));
+            span.end();
+
+            const spans = memoryExporter.getFinishedSpans();
+            expect(spans).toHaveLength(2);
+            expect([...new Set(spans.map((span) => span.spanContext.traceId))]).toHaveLength(1);
         });
     });
 });

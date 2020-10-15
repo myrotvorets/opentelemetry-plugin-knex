@@ -1,10 +1,11 @@
-/* eslint-disable no-invalid-this, @typescript-eslint/no-this-alias */
+/* eslint-disable no-invalid-this, @typescript-eslint/no-this-alias, @typescript-eslint/ban-types */
 import { BasePlugin } from '@opentelemetry/core';
 import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
 import type knexTypes from 'knex';
 import shimmer from 'shimmer';
 import path from 'path';
 import { Attributes, CanonicalCode, SpanKind } from '@opentelemetry/api';
+import { Span } from '@opentelemetry/tracing';
 
 interface KnexQuery {
     method?: string;
@@ -16,13 +17,11 @@ interface KnexQuery {
     sql: string;
 }
 
-interface ClientPrototype {
-    query(obj: KnexQuery): Promise<unknown>;
-}
-
 const basedir = path.dirname(require.resolve('knex'));
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-var-requires
 const version = require(path.join(basedir, 'package.json')).version;
+
+const _STORED_PARENT_SPAN: unique symbol = Symbol('stored-parent-span');
 
 export class KnexPlugin extends BasePlugin<knexTypes> {
     public readonly supportedVersions = ['0.21.*'];
@@ -40,17 +39,36 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
     }
 
     protected patch(): knexTypes {
+        const self = this;
+
         // istanbul ignore else
         if (this._internalFilesExports.client) {
-            // eslint-disable-next-line @typescript-eslint/ban-types
             const proto = (this._internalFilesExports.client as Function).prototype as knexTypes.Client;
-            const self = this;
+            shimmer.wrap(proto, 'queryBuilder', (original) => {
+                return function (this: unknown, ...params): knexTypes.QueryBuilder {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+                    (this as any)[_STORED_PARENT_SPAN] = self._tracer.getCurrentSpan();
+                    return original.apply(this, params);
+                };
+            });
+
+            shimmer.wrap(proto, 'raw', (original) => {
+                return function (this: unknown, ...params: unknown[]): unknown {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+                    (this as any)[_STORED_PARENT_SPAN] = self._tracer.getCurrentSpan();
+                    return original.apply(this, params);
+                };
+            });
+
             shimmer.wrap(proto, 'query', (original) => {
                 return function (
                     this: knexTypes.Client,
                     connection: unknown,
                     query: KnexQuery | string,
                 ): Promise<unknown> {
+                    const parentSpan =
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+                        self._tracer.getCurrentSpan() ?? ((this as any)[_STORED_PARENT_SPAN] as Span | undefined);
                     const q = typeof query === 'string' ? { sql: query } : query;
                     const span = self._tracer.startSpan(q.method ?? q.sql, {
                         kind: SpanKind.CLIENT,
@@ -61,6 +79,7 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
                                 ? `${q.sql}\nwith [${q.bindings}]`
                                 : q.sql,
                         },
+                        parent: parentSpan,
                     });
 
                     const returned = original.call(this, connection, query) as Promise<unknown>;
@@ -93,9 +112,8 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
     protected unpatch(): knexTypes {
         // istanbul ignore else
         if (this._internalFilesExports.client) {
-            // eslint-disable-next-line @typescript-eslint/ban-types
-            const proto = (this._internalFilesExports.client as Function).prototype as ClientPrototype;
-            shimmer.unwrap(proto, 'query');
+            const proto = (this._internalFilesExports.client as Function).prototype as knexTypes.Client;
+            shimmer.massUnwrap([proto], ['query', 'queryBuilder', 'raw']);
         }
 
         return this._moduleExports;
