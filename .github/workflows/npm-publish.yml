@@ -11,14 +11,19 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12
+
+      - name: Run clean install
+        run: npm ci
+
       - name: Set up Node.js and configure it for GitHub package registry
         uses: actions/setup-node@v1
         with:
           node-version: 12
           registry-url: https://npm.pkg.github.com/
-
-      - name: Run clean install
-        run: npm ci
 
       - name: Publish to GitHub package registry
         run: npm publish
