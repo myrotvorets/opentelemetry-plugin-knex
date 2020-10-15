@@ -1,0 +1,61 @@
+{
+  "name": "@myrotvorets/opentelemetry-plugin-knex",
+  "version": "0.0.1",
+  "description": "OpenTelemetry knex automatic instrumentation package",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "pretest": "npm run lint",
+    "test": "jest",
+    "posttest": "npm run build",
+    "prepublish": "npm run build"
+  },
+  "author": "Myrotvorets <support@myrotvorets.center> (https://myrotvorets.center/)",
+  "license": "MIT",
+  "files": [
+    "dist/lib/*.js",
+    "dist/lib/*.d.ts"
+  ],
+  "typings": "dist/lib/index.d.ts",
+  "devDependencies": {
+    "@myrotvorets/eslint-config-myrotvorets-ts": "^1.2.3",
+    "@opentelemetry/context-async-hooks": "0.11.0",
+    "@opentelemetry/node": "0.11.0",
+    "@opentelemetry/semantic-conventions": "0.11.0",
+    "@opentelemetry/tracing": "0.11.0",
+    "@types/jest": "^26.0.14",
+    "@types/mysql": "^2.15.15",
+    "@types/node": "14.0.27",
+    "@types/shimmer": "1.0.1",
+    "@typescript-eslint/eslint-plugin": "^4.4.1",
+    "@typescript-eslint/parser": "^4.4.1",
+    "eslint": "^7.11.0",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-prettier": "^3.1.4",
+    "eslint-plugin-sonarjs": "^0.5.0",
+    "jest": "^26.5.3",
+    "knex": "^0.21.6",
+    "merge": "^1.2.1",
+    "prettier": "^2.1.2",
+    "sqlite3": "^5.0.0",
+    "ts-jest": "^26.4.1",
+    "ts-node": "9.0.0",
+    "typescript": "^4.0.3"
+  },
+  "dependencies": {
+    "@opentelemetry/api": "^0.11.0",
+    "@opentelemetry/core": "^0.11.0",
+    "shimmer": "^1.2.1"
+  },
+  "main": "dist/lib/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/myrotvorets/opentelemetry-plugin-knex.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/myrotvorets/opentelemetry-plugin-knex/issues"
+  },
+  "homepage": "https://github.com/myrotvorets/opentelemetry-plugin-knex#readme"
+}
