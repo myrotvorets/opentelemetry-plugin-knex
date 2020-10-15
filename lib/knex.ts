@@ -1,4 +1,4 @@
-/* eslint-disable no-invalid-this, @typescript-eslint/no-this-alias, @typescript-eslint/ban-types */
+/* eslint-disable no-invalid-this, @typescript-eslint/ban-types */
 import { CanonicalCode, Span, SpanKind } from '@opentelemetry/api';
 import { BasePlugin } from '@opentelemetry/core';
 import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
@@ -54,56 +54,11 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
     }
 
     protected patch(): knexTypes {
-        const self = this;
-
         // istanbul ignore else
         if (this._internalFilesExports.client) {
             const proto = (this._internalFilesExports.client as Function).prototype as knexTypes.Client;
-            shimmer.massWrap([proto], ['queryBuilder', 'raw'], (original) => {
-                return function (this: unknown, ...params: unknown[]): unknown {
-                    self.ensureParentSpan(this);
-                    return (original as Function).apply(this, params);
-                };
-            });
-
-            shimmer.wrap(proto, 'query', (original) => {
-                return function (
-                    this: knexTypes.Client,
-                    connection: unknown,
-                    query: KnexQuery | string,
-                ): Promise<unknown> {
-                    const parentSpan = self.ensureParentSpan(this);
-                    const q = typeof query === 'string' ? { sql: query } : query;
-                    const span = self._tracer.startSpan(q.method ?? q.sql, {
-                        kind: SpanKind.CLIENT,
-                        attributes: {
-                            [DatabaseAttribute.DB_SYSTEM]: this.driverName,
-                            ...new ConnectionAttributes(this.connectionSettings).getAttributes(),
-                            [DatabaseAttribute.DB_STATEMENT]: q.bindings?.length
-                                ? `${q.sql}\nwith [${q.bindings}]`
-                                : q.sql,
-                        },
-                        parent: parentSpan,
-                    });
-
-                    const returned = original.call(this, connection, query) as Promise<unknown>;
-                    return returned.then(
-                        (result: unknown) => {
-                            span.setStatus({ code: CanonicalCode.OK });
-                            span.end();
-                            return Promise.resolve(result);
-                        },
-                        (e: Error) => {
-                            span.setStatus({
-                                code: CanonicalCode.UNKNOWN,
-                                message: e.message,
-                            });
-                            span.end();
-                            return Promise.reject(e);
-                        },
-                    );
-                };
-            });
+            shimmer.massWrap([proto], ['queryBuilder', 'raw'], (original) => this.patchAddParentSpan(original));
+            shimmer.wrap(proto, 'query', (original) => this.patchQuery(original));
         }
 
         return this._moduleExports;
@@ -117,6 +72,46 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
         }
 
         return this._moduleExports;
+    }
+
+    private patchAddParentSpan(original: (...params: unknown[]) => unknown): (...params: unknown[]) => unknown {
+        const self = this;
+        return function (this: unknown, ...params: unknown[]): unknown {
+            self.ensureParentSpan(this);
+            return original.apply(this, params);
+        };
+    }
+
+    private patchQuery(
+        original: (connection: unknown, obj: unknown) => Promise<unknown>,
+    ): (connection: unknown, obj: KnexQuery | string) => Promise<unknown> {
+        const self = this;
+        return function (this: knexTypes.Client, connection: unknown, query: KnexQuery | string): Promise<unknown> {
+            const span = self.createSpan(this, query);
+            return original.call(this, connection, query).then(
+                (result: unknown) => {
+                    span.setStatus({ code: CanonicalCode.OK }).end();
+                    return Promise.resolve(result);
+                },
+                (e: Error) => {
+                    span.setStatus({ code: CanonicalCode.UNKNOWN, message: e.message }).end();
+                    return Promise.reject(e);
+                },
+            );
+        };
+    }
+
+    private createSpan(client: knexTypes.Client, query: KnexQuery | string): Span {
+        const q = typeof query === 'string' ? { sql: query } : query;
+        return this._tracer.startSpan(q.method ?? q.sql, {
+            kind: SpanKind.CLIENT,
+            attributes: {
+                [DatabaseAttribute.DB_SYSTEM]: client.driverName,
+                ...new ConnectionAttributes(client.connectionSettings).getAttributes(),
+                [DatabaseAttribute.DB_STATEMENT]: q.bindings?.length ? `${q.sql}\nwith [${q.bindings}]` : q.sql,
+            },
+            parent: this.ensureParentSpan(client),
+        });
     }
 }
 
