@@ -7,24 +7,17 @@ import path from 'path';
 import { Attributes, CanonicalCode, SpanKind } from '@opentelemetry/api';
 
 interface KnexQuery {
-    method: string;
-    options: Record<string, unknown>;
-    timeout: boolean;
-    cancelOnTimeout: boolean;
-    bindings: unknown[];
+    method?: string;
+    options?: Record<string, unknown>;
+    timeout?: boolean;
+    cancelOnTimeout?: boolean;
+    bindings?: unknown[];
     __knexQueryUid?: string;
     sql: string;
 }
 
-interface RunnerPrototype {
+interface ClientPrototype {
     query(obj: KnexQuery): Promise<unknown>;
-}
-
-interface Runner extends RunnerPrototype {
-    client: knexTypes.Client;
-    builder: knexTypes.QueryBuilder;
-    queries: string[];
-    connection?: unknown;
 }
 
 const basedir = path.dirname(require.resolve('knex'));
@@ -38,7 +31,7 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
     protected readonly _basedir = basedir;
     protected _internalFilesList = {
         '*': {
-            runner: 'lib/runner',
+            client: 'lib/client',
         },
     };
 
@@ -48,45 +41,48 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
 
     protected patch(): knexTypes {
         // istanbul ignore else
-        if (this._internalFilesExports.runner) {
+        if (this._internalFilesExports.client) {
             // eslint-disable-next-line @typescript-eslint/ban-types
-            const proto = (this._internalFilesExports.runner as Function).prototype as RunnerPrototype;
+            const proto = (this._internalFilesExports.client as Function).prototype as knexTypes.Client;
             const self = this;
             shimmer.wrap(proto, 'query', (original) => {
-                return function (this: Runner, query: KnexQuery): Promise<unknown> {
-                    const span = self._tracer.startSpan(query.method, {
+                return function (
+                    this: knexTypes.Client,
+                    connection: unknown,
+                    query: KnexQuery | string,
+                ): Promise<unknown> {
+                    const q = typeof query === 'string' ? { sql: query } : query;
+                    const span = self._tracer.startSpan(q.method ?? q.sql, {
                         kind: SpanKind.CLIENT,
                         attributes: {
-                            [DatabaseAttribute.DB_SYSTEM]: this.builder.client.config.client,
-                            ...KnexPlugin.getConnectionAttributes(this.builder.client.config),
-                            [DatabaseAttribute.DB_STATEMENT]: query.bindings.length
-                                ? `${query.sql}\nwith [${query.bindings}]`
-                                : query.sql,
+                            [DatabaseAttribute.DB_SYSTEM]: this.config.client,
+                            ...KnexPlugin.getConnectionAttributes(this.config),
+                            [DatabaseAttribute.DB_STATEMENT]: q.bindings?.length
+                                ? `${q.sql}\nwith [${q.bindings}]`
+                                : q.sql,
                         },
                     });
 
-                    const returned = original.call(this, query);
-                    // istanbul ignore else
-                    if (returned.then) {
-                        return returned.then(
-                            (result: unknown) => {
+                    const returned = original.call(this, connection, query) as Promise<unknown>;
+                    return returned.then(
+                        (result: unknown) => {
+                            return new Promise((resolve) => {
                                 span.setStatus({ code: CanonicalCode.OK });
                                 span.end();
-                                return result;
-                            },
-                            (e: Error) => {
+                                resolve(result);
+                            });
+                        },
+                        (e: Error) => {
+                            return new Promise((_, reject) => {
                                 span.setStatus({
                                     code: CanonicalCode.UNKNOWN,
                                     message: e.message,
                                 });
                                 span.end();
-                                throw e;
-                            },
-                        );
-                    }
-
-                    /* istanbul ignore next */
-                    return returned;
+                                reject(e);
+                            });
+                        },
+                    );
                 };
             });
         }
@@ -96,9 +92,9 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
 
     protected unpatch(): knexTypes {
         // istanbul ignore else
-        if (this._internalFilesExports.runner) {
+        if (this._internalFilesExports.client) {
             // eslint-disable-next-line @typescript-eslint/ban-types
-            const proto = (this._internalFilesExports.runner as Function).prototype as RunnerPrototype;
+            const proto = (this._internalFilesExports.client as Function).prototype as ClientPrototype;
             shimmer.unwrap(proto, 'query');
         }
 
