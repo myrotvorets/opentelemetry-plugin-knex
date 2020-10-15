@@ -4,8 +4,7 @@ import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
 import type knexTypes from 'knex';
 import shimmer from 'shimmer';
 import path from 'path';
-import { Attributes, CanonicalCode, SpanKind } from '@opentelemetry/api';
-import { Span } from '@opentelemetry/tracing';
+import { Attributes, CanonicalCode, Span, SpanKind } from '@opentelemetry/api';
 
 interface KnexQuery {
     method?: string;
@@ -21,7 +20,7 @@ const basedir = path.dirname(require.resolve('knex'));
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-var-requires
 const version = require(path.join(basedir, 'package.json')).version;
 
-const _STORED_PARENT_SPAN: unique symbol = Symbol('stored-parent-span');
+const _STORED_PARENT_SPAN = Symbol('stored-parent-span');
 
 export class KnexPlugin extends BasePlugin<knexTypes> {
     public readonly supportedVersions = ['0.21.*'];
@@ -38,25 +37,26 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
         super('@myrotvorets/opentelemetry-plugin-knex', '1.0.0');
     }
 
+    private ensureParentSpan(fallback: unknown): Span | undefined {
+        const where = fallback as Record<typeof _STORED_PARENT_SPAN, Span>;
+        const span = this._tracer.getCurrentSpan() || where[_STORED_PARENT_SPAN];
+        if (span) {
+            where[_STORED_PARENT_SPAN] = span;
+        }
+
+        return span;
+    }
+
     protected patch(): knexTypes {
         const self = this;
 
         // istanbul ignore else
         if (this._internalFilesExports.client) {
             const proto = (this._internalFilesExports.client as Function).prototype as knexTypes.Client;
-            shimmer.wrap(proto, 'queryBuilder', (original) => {
-                return function (this: unknown, ...params): knexTypes.QueryBuilder {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-                    (this as any)[_STORED_PARENT_SPAN] = self._tracer.getCurrentSpan();
-                    return original.apply(this, params);
-                };
-            });
-
-            shimmer.wrap(proto, 'raw', (original) => {
+            shimmer.massWrap([proto], ['queryBuilder', 'raw'], (original) => {
                 return function (this: unknown, ...params: unknown[]): unknown {
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-                    (this as any)[_STORED_PARENT_SPAN] = self._tracer.getCurrentSpan();
-                    return original.apply(this, params);
+                    self.ensureParentSpan(this);
+                    return (original as Function).apply(this, params);
                 };
             });
 
@@ -66,9 +66,7 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
                     connection: unknown,
                     query: KnexQuery | string,
                 ): Promise<unknown> {
-                    const parentSpan =
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-                        self._tracer.getCurrentSpan() ?? ((this as any)[_STORED_PARENT_SPAN] as Span | undefined);
+                    const parentSpan = self.ensureParentSpan(this);
                     const q = typeof query === 'string' ? { sql: query } : query;
                     const span = self._tracer.startSpan(q.method ?? q.sql, {
                         kind: SpanKind.CLIENT,
@@ -85,21 +83,17 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
                     const returned = original.call(this, connection, query) as Promise<unknown>;
                     return returned.then(
                         (result: unknown) => {
-                            return new Promise((resolve) => {
-                                span.setStatus({ code: CanonicalCode.OK });
-                                span.end();
-                                resolve(result);
-                            });
+                            span.setStatus({ code: CanonicalCode.OK });
+                            span.end();
+                            return Promise.resolve(result);
                         },
                         (e: Error) => {
-                            return new Promise((_, reject) => {
-                                span.setStatus({
-                                    code: CanonicalCode.UNKNOWN,
-                                    message: e.message,
-                                });
-                                span.end();
-                                reject(e);
+                            span.setStatus({
+                                code: CanonicalCode.UNKNOWN,
+                                message: e.message,
                             });
+                            span.end();
+                            return Promise.reject(e);
                         },
                     );
                 };
