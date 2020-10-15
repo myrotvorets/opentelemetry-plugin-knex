@@ -9,7 +9,7 @@
     "pretest": "npm run lint",
     "test": "jest",
     "posttest": "npm run build",
-    "prepublish": "npm run build"
+    "prepare": "npm run build"
   },
   "author": "Myrotvorets <support@myrotvorets.center> (https://myrotvorets.center/)",
   "license": "MIT",
@@ -19,7 +19,7 @@
   ],
   "typings": "dist/lib/index.d.ts",
   "devDependencies": {
-    "@myrotvorets/eslint-config-myrotvorets-ts": "^1.2.4",
+    "@myrotvorets/eslint-config-myrotvorets-ts": "^1.2.7",
     "@opentelemetry/context-async-hooks": "^0.11.0",
     "@opentelemetry/node": "^0.11.0",
     "@opentelemetry/semantic-conventions": "^0.11.0",
@@ -48,14 +48,30 @@
     "@opentelemetry/core": "^0.11.0",
     "shimmer": "^1.2.1"
   },
+  "peerDependencies": {
+    "knex": "^0.21.6"
+  },
   "main": "dist/lib/index.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/myrotvorets/opentelemetry-plugin-knex.git"
   },
-  "keywords": [],
+  "keywords": [
+    "opentelemetry-plugin",
+    "opentelemetry",
+    "knex",
+    "knexjs",
+    "instrumentation"
+  ],
   "bugs": {
     "url": "https://github.com/myrotvorets/opentelemetry-plugin-knex/issues"
   },
-  "homepage": "https://github.com/myrotvorets/opentelemetry-plugin-knex#readme"
+  "homepage": "https://github.com/myrotvorets/opentelemetry-plugin-knex#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  }
 }
