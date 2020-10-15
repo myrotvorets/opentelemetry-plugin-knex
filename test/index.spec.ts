@@ -66,7 +66,7 @@ describe('KnexPlugin', () => {
                 const spans = memoryExporter.getFinishedSpans();
                 expect(spans[0].name).toBe('select');
                 expect(spans[0].status.code).toBe(CanonicalCode.OK);
-                expect(spans[0].attributes[DatabaseAttribute.DB_SYSTEM]).toBe('sqlite');
+                expect(spans[0].attributes[DatabaseAttribute.DB_SYSTEM]).toBe('sqlite3');
                 expect(spans[0].attributes[DatabaseAttribute.DB_NAME]).toBe(':memory:');
                 expect(spans[0].attributes[DatabaseAttribute.DB_STATEMENT]).toBe('select 2+2');
                 done();
@@ -81,7 +81,7 @@ describe('KnexPlugin', () => {
                 const spans = memoryExporter.getFinishedSpans();
                 expect(spans[0].name).toBe('select');
                 expect(spans[0].status.code).toBe(CanonicalCode.OK);
-                expect(spans[0].attributes[DatabaseAttribute.DB_SYSTEM]).toBe('sqlite');
+                expect(spans[0].attributes[DatabaseAttribute.DB_SYSTEM]).toBe('sqlite3');
                 expect(spans[0].attributes[DatabaseAttribute.DB_NAME]).toBe(':memory:');
                 expect(spans[0].attributes[DatabaseAttribute.DB_STATEMENT]).toBe('select ?\nwith [2]');
                 done();
@@ -95,7 +95,7 @@ describe('KnexPlugin', () => {
             connection.raw('SLECT 2+2').catch((e: Error) => {
                 const spans = memoryExporter.getFinishedSpans();
                 expect(spans).toHaveLength(1);
-                expect(spans[0].attributes[DatabaseAttribute.DB_SYSTEM]).toBe('sqlite');
+                expect(spans[0].attributes[DatabaseAttribute.DB_SYSTEM]).toBe('sqlite3');
                 expect(spans[0].attributes[DatabaseAttribute.DB_NAME]).toBe(':memory:');
                 expect(spans[0].attributes[DatabaseAttribute.DB_STATEMENT]).toBe('SLECT 2+2');
                 expect(spans[0].status.code).toBe(CanonicalCode.UNKNOWN);
@@ -157,6 +157,19 @@ describe('KnexPlugin', () => {
             const spans = memoryExporter.getFinishedSpans();
             expect(spans).toHaveLength(2);
             expect([...new Set(spans.map((span) => span.spanContext.traceId))]).toHaveLength(1);
+        });
+    });
+
+    it('should handle transactions', () => {
+        const span = provider.getTracer('default').startSpan('test span');
+        return provider.getTracer('default').withSpan(span, async () => {
+            await connection.transaction((trx) => {
+                return trx.raw('SELECT 2+2');
+            });
+
+            const spans = memoryExporter.getFinishedSpans();
+            expect(spans).toHaveLength(3);
+            expect(spans[1].name).toBe('raw');
         });
     });
 });
