@@ -1,0 +1,28 @@
+name: Build CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node_version: ['12', '14']
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v2.1.2
+        with:
+          node-version: ${{ matrix.node_version }}
+          registry-url: https://npm.pkg.github.com
+
+      - name: Install dependencies and run tests
+        run: npm cit
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
