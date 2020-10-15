@@ -1,10 +1,11 @@
 /* eslint-disable no-invalid-this, @typescript-eslint/no-this-alias, @typescript-eslint/ban-types */
-import { Attributes, CanonicalCode, Span, SpanKind } from '@opentelemetry/api';
+import { CanonicalCode, Span, SpanKind } from '@opentelemetry/api';
 import { BasePlugin } from '@opentelemetry/core';
 import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
 import type knexTypes from 'knex';
 import shimmer from 'shimmer';
 import path from 'path';
+import { ConnectionAttributes } from './connectionattributes';
 
 interface KnexQuery {
     method?: string;
@@ -71,8 +72,8 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
                     const span = self._tracer.startSpan(q.method ?? q.sql, {
                         kind: SpanKind.CLIENT,
                         attributes: {
-                            [DatabaseAttribute.DB_SYSTEM]: this.config.client,
-                            ...KnexPlugin.getConnectionAttributes(this.config),
+                            [DatabaseAttribute.DB_SYSTEM]: this.driverName,
+                            ...new ConnectionAttributes(this.connectionSettings).getAttributes(),
                             [DatabaseAttribute.DB_STATEMENT]: q.bindings?.length
                                 ? `${q.sql}\nwith [${q.bindings}]`
                                 : q.sql,
@@ -111,68 +112,6 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
         }
 
         return this._moduleExports;
-    }
-
-    private static getConnectionAttributes(config: knexTypes.Config): Attributes {
-        // istanbul ignore if
-        if (typeof config.connection === 'function' || config.connection === undefined) {
-            return {};
-        }
-
-        const conn: string | knexTypes.StaticConnectionConfig = config.connection;
-
-        // istanbul ignore else
-        if (typeof conn === 'object') {
-            switch (config.client) {
-                case 'sqlite':
-                case 'sqlite3': {
-                    const connection = conn as knexTypes.Sqlite3ConnectionConfig;
-                    return {
-                        [DatabaseAttribute.DB_NAME]: connection.filename,
-                    };
-                }
-
-                case 'mysql':
-                case 'mysql2' /* istanbul ignore next */: {
-                    const connection = conn as knexTypes.MySqlConnectionConfig | knexTypes.MariaSqlConnectionConfig;
-                    return {
-                        [DatabaseAttribute.DB_USER]: connection.user,
-                        [DatabaseAttribute.DB_NAME]:
-                            (connection as knexTypes.MySqlConnectionConfig).database ??
-                            (connection as knexTypes.MariaSqlConnectionConfig).db,
-                    };
-                }
-
-                case 'pg':
-                case 'postgres':
-                case 'postgresql':
-                case 'redshift':
-                case 'mssql':
-                case 'oracledb' /* istanbul ignore next */: {
-                    const connection = conn as
-                        | knexTypes.PgConnectionConfig
-                        | knexTypes.MsSqlConnectionConfig
-                        | knexTypes.OracleDbConnectionConfig;
-                    return {
-                        [DatabaseAttribute.DB_USER]: connection.user,
-                        [DatabaseAttribute.DB_NAME]: connection.database,
-                    };
-                }
-
-                default: /* istanbul ignore next */ {
-                    const connection = conn as knexTypes.ConnectionConfig;
-                    return {
-                        [DatabaseAttribute.DB_USER]: connection.user,
-                        [DatabaseAttribute.DB_NAME]: connection.database,
-                    };
-                }
-            }
-        }
-
-        // istanbul ignore next
-        return {
-            [DatabaseAttribute.DB_CONNECTION_STRING]: config.connection,
-        };
     }
 }
 
