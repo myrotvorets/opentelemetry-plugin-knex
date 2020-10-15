@@ -3,10 +3,25 @@ import { CanonicalCode, context } from '@opentelemetry/api';
 import { NoopLogger } from '@opentelemetry/core';
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
-import { InMemorySpanExporter, SimpleSpanProcessor } from '@opentelemetry/tracing';
+import { InMemorySpanExporter, ReadableSpan, SimpleSpanProcessor } from '@opentelemetry/tracing';
 import knex from 'knex';
 import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
 import { KnexPlugin, plugin } from '../lib';
+
+function checkSpanAttributes(
+    spans: Readonly<ReadableSpan[]>,
+    name: string,
+    code: CanonicalCode,
+    stmt: string,
+    err?: Error,
+): void {
+    expect(spans[0].name).toBe(name);
+    expect(spans[0].status.code).toBe(code);
+    expect(spans[0].attributes[DatabaseAttribute.DB_SYSTEM]).toBe('sqlite3');
+    expect(spans[0].attributes[DatabaseAttribute.DB_NAME]).toBe(':memory:');
+    expect(spans[0].attributes[DatabaseAttribute.DB_STATEMENT]).toBe(stmt);
+    expect(spans[0].status.message).toBe(err?.message);
+}
 
 describe('KnexPlugin', () => {
     let contextManager: AsyncHooksContextManager;
@@ -64,11 +79,7 @@ describe('KnexPlugin', () => {
         provider.getTracer('default').withSpan(span, () => {
             connection.select(connection.raw('2+2')).finally(() => {
                 const spans = memoryExporter.getFinishedSpans();
-                expect(spans[0].name).toBe('select');
-                expect(spans[0].status.code).toBe(CanonicalCode.OK);
-                expect(spans[0].attributes[DatabaseAttribute.DB_SYSTEM]).toBe('sqlite3');
-                expect(spans[0].attributes[DatabaseAttribute.DB_NAME]).toBe(':memory:');
-                expect(spans[0].attributes[DatabaseAttribute.DB_STATEMENT]).toBe('select 2+2');
+                checkSpanAttributes(spans, 'select', CanonicalCode.OK, 'select 2+2');
                 done();
             });
         });
@@ -79,11 +90,7 @@ describe('KnexPlugin', () => {
         provider.getTracer('default').withSpan(span, () => {
             connection.select(connection.raw('?', 2)).finally(() => {
                 const spans = memoryExporter.getFinishedSpans();
-                expect(spans[0].name).toBe('select');
-                expect(spans[0].status.code).toBe(CanonicalCode.OK);
-                expect(spans[0].attributes[DatabaseAttribute.DB_SYSTEM]).toBe('sqlite3');
-                expect(spans[0].attributes[DatabaseAttribute.DB_NAME]).toBe(':memory:');
-                expect(spans[0].attributes[DatabaseAttribute.DB_STATEMENT]).toBe('select ?\nwith [2]');
+                checkSpanAttributes(spans, 'select', CanonicalCode.OK, 'select ?\nwith [2]');
                 done();
             });
         });
@@ -95,11 +102,7 @@ describe('KnexPlugin', () => {
             connection.raw('SLECT 2+2').catch((e: Error) => {
                 const spans = memoryExporter.getFinishedSpans();
                 expect(spans).toHaveLength(1);
-                expect(spans[0].attributes[DatabaseAttribute.DB_SYSTEM]).toBe('sqlite3');
-                expect(spans[0].attributes[DatabaseAttribute.DB_NAME]).toBe(':memory:');
-                expect(spans[0].attributes[DatabaseAttribute.DB_STATEMENT]).toBe('SLECT 2+2');
-                expect(spans[0].status.code).toBe(CanonicalCode.UNKNOWN);
-                expect(spans[0].status.message).toBe(e.message);
+                checkSpanAttributes(spans, 'raw', CanonicalCode.UNKNOWN, 'SLECT 2+2', e);
                 done();
             });
         });
@@ -113,6 +116,7 @@ describe('KnexPlugin', () => {
 
             const spans = memoryExporter.getFinishedSpans();
             expect(spans.length).toBe(1);
+            checkSpanAttributes(spans, 'raw', CanonicalCode.OK, 'SELECT 2+2');
 
             expect(spans[0].spanContext.traceId).toEqual(rootSpan.context().traceId);
             expect(spans[0].parentSpanId).toEqual(rootSpan.context().spanId);
@@ -126,6 +130,7 @@ describe('KnexPlugin', () => {
 
             const spans = memoryExporter.getFinishedSpans();
             expect(spans.length).toBe(1);
+            checkSpanAttributes(spans, 'select', CanonicalCode.OK, 'select 2+2');
 
             expect(spans[0].spanContext.traceId).toEqual(rootSpan.context().traceId);
             expect(spans[0].parentSpanId).toEqual(rootSpan.context().spanId);
@@ -143,7 +148,7 @@ describe('KnexPlugin', () => {
 
                 const spans = memoryExporter.getFinishedSpans();
                 expect(spans).toHaveLength(3);
-                expect([...new Set(spans.map((span) => span.spanContext.traceId))]).toHaveLength(1);
+                expect([...new Set(spans.map((currentSpan) => currentSpan.spanContext.traceId))]).toHaveLength(1);
             });
         });
     });
@@ -156,7 +161,7 @@ describe('KnexPlugin', () => {
 
             const spans = memoryExporter.getFinishedSpans();
             expect(spans).toHaveLength(2);
-            expect([...new Set(spans.map((span) => span.spanContext.traceId))]).toHaveLength(1);
+            expect([...new Set(spans.map((currentSpan) => currentSpan.spanContext.traceId))]).toHaveLength(1);
         });
     });
 
