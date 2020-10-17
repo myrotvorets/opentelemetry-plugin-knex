@@ -26,7 +26,7 @@ const knexBaseDir = path.dirname(require.resolve('knex'));
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const knexVersion = (require(path.join(knexBaseDir, 'package.json')) as IPackage).version;
 
-const _STORED_PARENT_SPAN = Symbol('stored-parent-span');
+const _STORED_PARENT_SPAN = Symbol.for('opentelemetry.stored-parent-span');
 
 export class KnexPlugin extends BasePlugin<knexTypes> {
     public readonly supportedVersions = ['0.21.*'];
