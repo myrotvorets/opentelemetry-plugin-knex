@@ -1,11 +1,12 @@
 /* eslint-disable no-void */
 import { CanonicalCode, context } from '@opentelemetry/api';
 import { NoopLogger } from '@opentelemetry/core';
-import { NodeTracerProvider } from '@opentelemetry/node';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
+import { NodeTracerProvider } from '@opentelemetry/node';
+import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
 import { InMemorySpanExporter, ReadableSpan, SimpleSpanProcessor } from '@opentelemetry/tracing';
 import knex from 'knex';
-import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
+import shimmer from 'shimmer';
 import { KnexPlugin, plugin } from '../lib';
 
 function checkSpanAttributes(
@@ -46,6 +47,12 @@ describe('KnexPlugin', () => {
     });
 
     beforeEach(() => {
+        shimmer({
+            logger: (msg) => {
+                throw new Error(msg);
+            },
+        });
+
         contextManager = new AsyncHooksContextManager().enable();
         context.setGlobalContextManager(contextManager);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -61,6 +68,7 @@ describe('KnexPlugin', () => {
     });
 
     afterEach(() => {
+        jest.resetAllMocks();
         context.disable();
         memoryExporter.reset();
         plugin.disable();
@@ -74,11 +82,39 @@ describe('KnexPlugin', () => {
         expect(plugin.moduleName).toBe('knex');
     });
 
+    it('should handle double enable() gracefully', (done) => {
+        const span = provider.getTracer('default').startSpan('test span');
+        provider.getTracer('default').withSpan(span, () => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            plugin.enable(knex as any, provider, logger);
+            connection.select(connection.raw('2+2')).finally(() => {
+                const spans = memoryExporter.getFinishedSpans();
+                expect(spans).toHaveLength(1);
+                done();
+            });
+        });
+    });
+
+    it('should handle double disable() gracefully', (done) => {
+        const span = provider.getTracer('default').startSpan('test span');
+        provider.getTracer('default').withSpan(span, () => {
+            plugin.disable();
+            plugin.disable();
+
+            connection.select(connection.raw('2+2')).finally(() => {
+                const spans = memoryExporter.getFinishedSpans();
+                expect(spans).toHaveLength(0);
+                done();
+            });
+        });
+    });
+
     it('should name the span accordingly ', (done) => {
         const span = provider.getTracer('default').startSpan('test span');
         provider.getTracer('default').withSpan(span, () => {
             connection.select(connection.raw('2+2')).finally(() => {
                 const spans = memoryExporter.getFinishedSpans();
+                expect(spans).toHaveLength(1);
                 checkSpanAttributes(spans, 'select', CanonicalCode.OK, 'select 2+2');
                 done();
             });

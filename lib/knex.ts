@@ -39,8 +39,32 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
         },
     };
 
+    private enabled = false;
+
     public constructor(public readonly moduleName: string, public readonly version: string) {
         super('@myrotvorets/opentelemetry-plugin-knex', '1.0.0');
+    }
+
+    protected patch(): knexTypes {
+        // istanbul ignore else
+        if (!this.enabled && this._internalFilesExports.client) {
+            const proto = (this._internalFilesExports.client as Function).prototype as knexTypes.Client;
+            shimmer.massWrap([proto], ['queryBuilder', 'raw'], (original) => this.patchAddParentSpan(original));
+            shimmer.wrap(proto, 'query', (original) => this.patchQuery(original));
+
+            this.enabled = true;
+        }
+
+        return this._moduleExports;
+    }
+
+    protected unpatch(): void {
+        // istanbul ignore else
+        if (this.enabled && this._internalFilesExports.client) {
+            const proto = (this._internalFilesExports.client as Function).prototype as knexTypes.Client;
+            shimmer.massUnwrap([proto], ['query', 'queryBuilder', 'raw']);
+            this.enabled = false;
+        }
     }
 
     private ensureParentSpan(fallback: unknown): Span | undefined {
@@ -51,25 +75,6 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
         }
 
         return span;
-    }
-
-    protected patch(): knexTypes {
-        // istanbul ignore else
-        if (this._internalFilesExports.client) {
-            const proto = (this._internalFilesExports.client as Function).prototype as knexTypes.Client;
-            shimmer.massWrap([proto], ['queryBuilder', 'raw'], (original) => this.patchAddParentSpan(original));
-            shimmer.wrap(proto, 'query', (original) => this.patchQuery(original));
-        }
-
-        return this._moduleExports;
-    }
-
-    protected unpatch(): void {
-        // istanbul ignore else
-        if (this._internalFilesExports.client) {
-            const proto = (this._internalFilesExports.client as Function).prototype as knexTypes.Client;
-            shimmer.massUnwrap([proto], ['query', 'queryBuilder', 'raw']);
-        }
     }
 
     private patchAddParentSpan(original: (...params: unknown[]) => unknown): (...params: unknown[]) => unknown {
