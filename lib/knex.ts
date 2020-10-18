@@ -64,14 +64,12 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
         return this._moduleExports;
     }
 
-    protected unpatch(): knexTypes {
+    protected unpatch(): void {
         // istanbul ignore else
         if (this._internalFilesExports.client) {
             const proto = (this._internalFilesExports.client as Function).prototype as knexTypes.Client;
             shimmer.massUnwrap([proto], ['query', 'queryBuilder', 'raw']);
         }
-
-        return this._moduleExports;
     }
 
     private patchAddParentSpan(original: (...params: unknown[]) => unknown): (...params: unknown[]) => unknown {
