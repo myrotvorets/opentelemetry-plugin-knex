@@ -1,4 +1,4 @@
-/* eslint-disable no-invalid-this, @typescript-eslint/ban-types */
+/* eslint-disable no-invalid-this */
 import { CanonicalCode, Span, SpanKind } from '@opentelemetry/api';
 import { BasePlugin } from '@opentelemetry/core';
 import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
@@ -48,7 +48,7 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
     protected patch(): knexTypes {
         // istanbul ignore else
         if (!this.enabled && this._internalFilesExports.client) {
-            const proto = (this._internalFilesExports.client as Function).prototype as knexTypes.Client;
+            const proto = (this._internalFilesExports.client as ObjectConstructor).prototype as knexTypes.Client;
             shimmer.massWrap([proto], ['queryBuilder', 'raw'], (original) => this.patchAddParentSpan(original));
             shimmer.wrap(proto, 'query', (original) => this.patchQuery(original));
 
@@ -61,7 +61,7 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
     protected unpatch(): void {
         // istanbul ignore else
         if (this.enabled && this._internalFilesExports.client) {
-            const proto = (this._internalFilesExports.client as Function).prototype as knexTypes.Client;
+            const proto = (this._internalFilesExports.client as ObjectConstructor).prototype as knexTypes.Client;
             shimmer.massUnwrap([proto], ['query', 'queryBuilder', 'raw']);
             this.enabled = false;
         }
