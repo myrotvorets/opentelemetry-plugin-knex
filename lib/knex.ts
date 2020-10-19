@@ -1,4 +1,3 @@
-/* eslint-disable no-invalid-this */
 import { CanonicalCode, Span, SpanKind } from '@opentelemetry/api';
 import { BasePlugin } from '@opentelemetry/core';
 import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
@@ -49,8 +48,8 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
         // istanbul ignore else
         if (!this.enabled && this._internalFilesExports.client) {
             const proto = (this._internalFilesExports.client as ObjectConstructor).prototype as knexTypes.Client;
-            shimmer.massWrap([proto], ['queryBuilder', 'raw'], (original) => this.patchAddParentSpan(original));
-            shimmer.wrap(proto, 'query', (original) => this.patchQuery(original));
+            shimmer.massWrap([proto], ['queryBuilder', 'raw'], this.patchAddParentSpan);
+            shimmer.wrap(proto, 'query', this.patchQuery);
 
             this.enabled = true;
         }
@@ -77,17 +76,17 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
         return span;
     }
 
-    private patchAddParentSpan(original: (...params: unknown[]) => unknown): (...params: unknown[]) => unknown {
+    private readonly patchAddParentSpan = (original: (...params: unknown[]) => unknown): typeof original => {
         const self = this;
         return function (this: unknown, ...params: unknown[]): unknown {
             self.ensureParentSpan(this);
             return original.apply(this, params);
         };
-    }
+    };
 
-    private patchQuery(
+    private readonly patchQuery = (
         original: (connection: unknown, obj: unknown) => Promise<unknown>,
-    ): (connection: unknown, obj: KnexQuery | string) => Promise<unknown> {
+    ): ((connection: unknown, obj: KnexQuery | string) => Promise<unknown>) => {
         const self = this;
         return function (this: knexTypes.Client, connection: unknown, query: KnexQuery | string): Promise<unknown> {
             const span = self.createSpan(this, query);
@@ -102,7 +101,7 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
                 },
             );
         };
-    }
+    };
 
     private createSpan(client: knexTypes.Client, query: KnexQuery | string): Span {
         const q = typeof query === 'string' ? { sql: query } : query;
