@@ -1,11 +1,12 @@
-import { Attributes } from '@opentelemetry/api';
+import { AttributeValue, Attributes } from '@opentelemetry/api';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
 import type knexTypes from 'knex';
 
-function findAttribute<T = string>(where: Record<string, unknown>, keys: string[]): T | undefined {
+function findAttribute(where: Record<string, unknown>, keys: string[]): AttributeValue | undefined {
     for (const key of keys) {
-        if (where[key]) {
-            return where[key] as T;
+        const value = where[key];
+        if (typeof value === 'number' || typeof value === 'string' || typeof value === 'boolean') {
+            return value;
         }
     }
 
@@ -48,7 +49,7 @@ export class ConnectionAttributes {
     private setNetAttributes(connection: Readonly<knexTypes.StaticConnectionConfig>): void {
         const host = findAttribute(connection, ['host', 'server']);
         const name = findAttribute(connection, ['unixSocket', 'socketPath']);
-        const port = findAttribute<number>(connection, ['port']);
+        const port = findAttribute(connection, ['port']);
 
         // istanbul ignore if
         if (host) {
