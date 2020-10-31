@@ -35,16 +35,7 @@ describe('KnexPlugin', () => {
         provider.addSpanProcessor(new SimpleSpanProcessor(memoryExporter));
     });
 
-    afterAll((done) => {
-        connection
-            .destroy()
-            .then(() => {
-                done();
-            })
-            .catch((e) => {
-                done.fail(e);
-            });
-    });
+    afterAll(() => connection.destroy());
 
     beforeEach(() => {
         shimmer({
@@ -82,67 +73,72 @@ describe('KnexPlugin', () => {
         expect(plugin.moduleName).toBe('knex');
     });
 
-    it('should handle double enable() gracefully', (done) => {
-        const span = provider.getTracer('default').startSpan('test span');
-        provider.getTracer('default').withSpan(span, () => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            plugin.enable(knex as any, provider, logger);
-            connection.select(connection.raw('2+2')).finally(() => {
-                const spans = memoryExporter.getFinishedSpans();
-                expect(spans).toHaveLength(1);
-                done();
+    it('should handle double enable() gracefully', () =>
+        new Promise((done) => {
+            const span = provider.getTracer('default').startSpan('test span');
+            provider.getTracer('default').withSpan(span, () => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                plugin.enable(knex as any, provider, logger);
+                connection.select(connection.raw('2+2')).finally(() => {
+                    const spans = memoryExporter.getFinishedSpans();
+                    expect(spans).toHaveLength(1);
+                    done();
+                });
             });
-        });
-    });
+        }));
 
-    it('should handle double disable() gracefully', (done) => {
-        const span = provider.getTracer('default').startSpan('test span');
-        provider.getTracer('default').withSpan(span, () => {
-            plugin.disable();
-            plugin.disable();
+    it('should handle double disable() gracefully', () =>
+        new Promise((done) => {
+            const span = provider.getTracer('default').startSpan('test span');
+            provider.getTracer('default').withSpan(span, () => {
+                plugin.disable();
+                plugin.disable();
 
-            connection.select(connection.raw('2+2')).finally(() => {
-                const spans = memoryExporter.getFinishedSpans();
-                expect(spans).toHaveLength(0);
-                done();
+                connection.select(connection.raw('2+2')).finally(() => {
+                    const spans = memoryExporter.getFinishedSpans();
+                    expect(spans).toHaveLength(0);
+                    done();
+                });
             });
-        });
-    });
+        }));
 
-    it('should name the span accordingly ', (done) => {
-        const span = provider.getTracer('default').startSpan('test span');
-        provider.getTracer('default').withSpan(span, () => {
-            connection.select(connection.raw('2+2')).finally(() => {
-                const spans = memoryExporter.getFinishedSpans();
-                expect(spans).toHaveLength(1);
-                checkSpanAttributes(spans, 'select', CanonicalCode.OK, 'select 2+2');
-                done();
+    it('should name the span accordingly', () =>
+        new Promise((done) => {
+            const span = provider.getTracer('default').startSpan('test span');
+            provider.getTracer('default').withSpan(span, () => {
+                connection.select(connection.raw('2+2')).finally(() => {
+                    const spans = memoryExporter.getFinishedSpans();
+                    expect(spans).toHaveLength(1);
+                    checkSpanAttributes(spans, 'select', CanonicalCode.OK, 'select 2+2');
+                    done();
+                });
             });
-        });
-    });
+        }));
 
-    it('should add bindings to DB_STATEMENT ', (done) => {
-        const span = provider.getTracer('default').startSpan('test span');
-        provider.getTracer('default').withSpan(span, () => {
-            connection.select(connection.raw('?', 2)).finally(() => {
-                const spans = memoryExporter.getFinishedSpans();
-                checkSpanAttributes(spans, 'select', CanonicalCode.OK, 'select ?\nwith [2]');
-                done();
+    it('should add bindings to DB_STATEMENT', () =>
+        new Promise((done) => {
+            const span = provider.getTracer('default').startSpan('test span');
+            provider.getTracer('default').withSpan(span, () => {
+                connection.select(connection.raw('?', 2)).finally(() => {
+                    const spans = memoryExporter.getFinishedSpans();
+                    checkSpanAttributes(spans, 'select', CanonicalCode.OK, 'select ?\nwith [2]');
+                    done();
+                });
             });
-        });
-    });
+        }));
 
-    it('should attach error messages to spans', (done) => {
-        const span = provider.getTracer('default').startSpan('test span');
-        provider.getTracer('default').withSpan(span, () => {
-            connection.raw('SLECT 2+2').catch((e: Error) => {
-                const spans = memoryExporter.getFinishedSpans();
-                expect(spans).toHaveLength(1);
-                checkSpanAttributes(spans, 'raw', CanonicalCode.UNKNOWN, 'SLECT 2+2', e);
-                done();
+    it('should attach error messages to spans', () =>
+        new Promise((done) => {
+            const span = provider.getTracer('default').startSpan('test span');
+            provider.getTracer('default').withSpan(span, () => {
+                connection.raw('SLECT 2+2').catch((e: Error) => {
+                    const spans = memoryExporter.getFinishedSpans();
+                    expect(spans).toHaveLength(1);
+                    checkSpanAttributes(spans, 'raw', CanonicalCode.UNKNOWN, 'SLECT 2+2', e);
+                    done();
+                });
             });
-        });
-    });
+        }));
 
     // See https://github.com/wdalmut/opentelemetry-plugin-mongoose/pull/34/files
     it('should handle await on a thenable query object (raw)', () => {
@@ -151,7 +147,7 @@ describe('KnexPlugin', () => {
             await connection.raw('SELECT 2+2');
 
             const spans = memoryExporter.getFinishedSpans();
-            expect(spans.length).toBe(1);
+            expect(spans).toHaveLength(1);
             checkSpanAttributes(spans, 'raw', CanonicalCode.OK, 'SELECT 2+2');
 
             expect(spans[0].spanContext.traceId).toEqual(rootSpan.context().traceId);
@@ -165,7 +161,7 @@ describe('KnexPlugin', () => {
             await connection.select(connection.raw('2+2'));
 
             const spans = memoryExporter.getFinishedSpans();
-            expect(spans.length).toBe(1);
+            expect(spans).toHaveLength(1);
             checkSpanAttributes(spans, 'select', CanonicalCode.OK, 'select 2+2');
 
             expect(spans[0].spanContext.traceId).toEqual(rootSpan.context().traceId);
