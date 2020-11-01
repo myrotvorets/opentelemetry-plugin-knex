@@ -34,7 +34,7 @@
     "eslint-plugin-prettier": "^3.1.4",
     "eslint-plugin-sonarjs": "^0.5.0",
     "jest": "^26.6.1",
-    "knex": "^0.21.0 <0.21.10",
+    "knex": "^0.21.11",
     "merge": "^1.2.1",
     "prettier": "^2.1.2",
     "sqlite3": "^5.0.0",
