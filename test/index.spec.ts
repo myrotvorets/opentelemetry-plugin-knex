@@ -74,7 +74,7 @@ describe('KnexPlugin', () => {
     });
 
     it('should handle double enable() gracefully', () =>
-        new Promise((done) => {
+        new Promise<void>((done) => {
             const span = provider.getTracer('default').startSpan('test span');
             provider.getTracer('default').withSpan(span, () => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -88,7 +88,7 @@ describe('KnexPlugin', () => {
         }));
 
     it('should handle double disable() gracefully', () =>
-        new Promise((done) => {
+        new Promise<void>((done) => {
             const span = provider.getTracer('default').startSpan('test span');
             provider.getTracer('default').withSpan(span, () => {
                 plugin.disable();
@@ -103,7 +103,7 @@ describe('KnexPlugin', () => {
         }));
 
     it('should name the span accordingly', () =>
-        new Promise((done) => {
+        new Promise<void>((done) => {
             const span = provider.getTracer('default').startSpan('test span');
             provider.getTracer('default').withSpan(span, () => {
                 connection.select(connection.raw('2+2')).finally(() => {
@@ -116,7 +116,7 @@ describe('KnexPlugin', () => {
         }));
 
     it('should add bindings to DB_STATEMENT', () =>
-        new Promise((done) => {
+        new Promise<void>((done) => {
             const span = provider.getTracer('default').startSpan('test span');
             provider.getTracer('default').withSpan(span, () => {
                 connection.select(connection.raw('?', 2)).finally(() => {
@@ -128,7 +128,7 @@ describe('KnexPlugin', () => {
         }));
 
     it('should attach error messages to spans', () =>
-        new Promise((done) => {
+        new Promise<void>((done) => {
             const span = provider.getTracer('default').startSpan('test span');
             provider.getTracer('default').withSpan(span, () => {
                 connection.raw('SLECT 2+2').catch((e: Error) => {
