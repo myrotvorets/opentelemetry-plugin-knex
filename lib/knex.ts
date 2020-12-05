@@ -1,4 +1,4 @@
-import { CanonicalCode, Span, SpanKind } from '@opentelemetry/api';
+import { Span, SpanKind, StatusCode, context, setActiveSpan } from '@opentelemetry/api';
 import { BasePlugin } from '@opentelemetry/core';
 import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
 import type knexTypes from 'knex';
@@ -92,11 +92,11 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
             const span = self.createSpan(this, query);
             return original.call(this, connection, query).then(
                 (result: unknown) => {
-                    span.setStatus({ code: CanonicalCode.OK }).end();
+                    span.setStatus({ code: StatusCode.OK }).end();
                     return Promise.resolve(result);
                 },
                 (e: Error) => {
-                    span.setStatus({ code: CanonicalCode.UNKNOWN, message: e.message }).end();
+                    span.setStatus({ code: StatusCode.ERROR, message: e.message }).end();
                     return Promise.reject(e);
                 },
             );
@@ -105,15 +105,20 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
 
     private createSpan(client: knexTypes.Client, query: KnexQuery | string): Span {
         const q = typeof query === 'string' ? { sql: query } : query;
-        return this._tracer.startSpan(q.method ?? q.sql, {
-            kind: SpanKind.CLIENT,
-            attributes: {
-                [DatabaseAttribute.DB_SYSTEM]: client.driverName,
-                ...new ConnectionAttributes(client.connectionSettings).getAttributes(),
-                [DatabaseAttribute.DB_STATEMENT]: q.bindings?.length ? `${q.sql}\nwith [${q.bindings}]` : q.sql,
+        const parentSpan = this.ensureParentSpan(client);
+
+        return this._tracer.startSpan(
+            q.method ?? q.sql,
+            {
+                kind: SpanKind.CLIENT,
+                attributes: {
+                    [DatabaseAttribute.DB_SYSTEM]: client.driverName,
+                    ...new ConnectionAttributes(client.connectionSettings).getAttributes(),
+                    [DatabaseAttribute.DB_STATEMENT]: q.bindings?.length ? `${q.sql}\nwith [${q.bindings}]` : q.sql,
+                },
             },
-            parent: this.ensureParentSpan(client),
-        });
+            parentSpan ? setActiveSpan(context.active(), parentSpan) : undefined,
+        );
     }
 }
 

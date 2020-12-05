@@ -1,5 +1,5 @@
 /* eslint-disable no-void */
-import { CanonicalCode, context } from '@opentelemetry/api';
+import { StatusCode, context } from '@opentelemetry/api';
 import { NoopLogger } from '@opentelemetry/core';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { NodeTracerProvider } from '@opentelemetry/node';
@@ -12,7 +12,7 @@ import { KnexPlugin, plugin } from '../lib';
 function checkSpanAttributes(
     spans: Readonly<ReadableSpan[]>,
     name: string,
-    code: CanonicalCode,
+    code: StatusCode,
     stmt: string,
     err?: Error,
 ): void {
@@ -109,7 +109,7 @@ describe('KnexPlugin', () => {
                 connection.select(connection.raw('2+2')).finally(() => {
                     const spans = memoryExporter.getFinishedSpans();
                     expect(spans).toHaveLength(1);
-                    checkSpanAttributes(spans, 'select', CanonicalCode.OK, 'select 2+2');
+                    checkSpanAttributes(spans, 'select', StatusCode.OK, 'select 2+2');
                     done();
                 });
             });
@@ -121,7 +121,7 @@ describe('KnexPlugin', () => {
             provider.getTracer('default').withSpan(span, () => {
                 connection.select(connection.raw('?', 2)).finally(() => {
                     const spans = memoryExporter.getFinishedSpans();
-                    checkSpanAttributes(spans, 'select', CanonicalCode.OK, 'select ?\nwith [2]');
+                    checkSpanAttributes(spans, 'select', StatusCode.OK, 'select ?\nwith [2]');
                     done();
                 });
             });
@@ -134,7 +134,7 @@ describe('KnexPlugin', () => {
                 connection.raw('SLECT 2+2').catch((e: Error) => {
                     const spans = memoryExporter.getFinishedSpans();
                     expect(spans).toHaveLength(1);
-                    checkSpanAttributes(spans, 'raw', CanonicalCode.UNKNOWN, 'SLECT 2+2', e);
+                    checkSpanAttributes(spans, 'raw', StatusCode.ERROR, 'SLECT 2+2', e);
                     done();
                 });
             });
@@ -148,7 +148,7 @@ describe('KnexPlugin', () => {
 
             const spans = memoryExporter.getFinishedSpans();
             expect(spans).toHaveLength(1);
-            checkSpanAttributes(spans, 'raw', CanonicalCode.OK, 'SELECT 2+2');
+            checkSpanAttributes(spans, 'raw', StatusCode.OK, 'SELECT 2+2');
 
             expect(spans[0].spanContext.traceId).toEqual(rootSpan.context().traceId);
             expect(spans[0].parentSpanId).toEqual(rootSpan.context().spanId);
@@ -162,7 +162,7 @@ describe('KnexPlugin', () => {
 
             const spans = memoryExporter.getFinishedSpans();
             expect(spans).toHaveLength(1);
-            checkSpanAttributes(spans, 'select', CanonicalCode.OK, 'select 2+2');
+            checkSpanAttributes(spans, 'select', StatusCode.OK, 'select 2+2');
 
             expect(spans[0].spanContext.traceId).toEqual(rootSpan.context().traceId);
             expect(spans[0].parentSpanId).toEqual(rootSpan.context().spanId);
