@@ -19,7 +19,7 @@
   ],
   "typings": "dist/lib/index.d.ts",
   "devDependencies": {
-    "@myrotvorets/eslint-config-myrotvorets-ts": "^2.2.2",
+    "@myrotvorets/eslint-config-myrotvorets-ts": "^2.2.3",
     "@opentelemetry/context-async-hooks": "^0.14.0",
     "@opentelemetry/node": "^0.14.0",
     "@opentelemetry/tracing": "^0.14.0",
@@ -34,7 +34,7 @@
     "eslint-plugin-prettier": "^3.3.0",
     "eslint-plugin-sonarjs": "^0.5.0",
     "jest": "^26.6.3",
-    "knex": "^0.21.14",
+    "knex": "^0.21.15",
     "merge": "^2.1.0",
     "prettier": "^2.2.1",
     "sqlite3": "^5.0.0",
