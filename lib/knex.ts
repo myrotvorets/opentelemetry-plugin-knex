@@ -1,4 +1,4 @@
-import { Span, SpanKind, StatusCode, context, setActiveSpan } from '@opentelemetry/api';
+import { Span, SpanKind, StatusCode, context, getSpan, setSpan } from '@opentelemetry/api';
 import { BasePlugin } from '@opentelemetry/core';
 import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
 import type knexTypes from 'knex';
@@ -66,9 +66,10 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
         }
     }
 
+    // eslint-disable-next-line class-methods-use-this
     private ensureParentSpan(fallback: unknown): Span | undefined {
         const where = fallback as Record<typeof _STORED_PARENT_SPAN, Span>;
-        const span = this._tracer.getCurrentSpan() || where[_STORED_PARENT_SPAN];
+        const span = getSpan(context.active()) || where[_STORED_PARENT_SPAN];
         if (span) {
             where[_STORED_PARENT_SPAN] = span;
         }
@@ -117,7 +118,7 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
                     [DatabaseAttribute.DB_STATEMENT]: q.bindings?.length ? `${q.sql}\nwith [${q.bindings}]` : q.sql,
                 },
             },
-            parentSpan ? setActiveSpan(context.active(), parentSpan) : undefined,
+            parentSpan ? setSpan(context.active(), parentSpan) : undefined,
         );
     }
 }
