@@ -1,4 +1,4 @@
-import { NoopLogger, StatusCode, context, setSpan } from '@opentelemetry/api';
+import { SpanStatusCode, context, setSpan } from '@opentelemetry/api';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
@@ -10,7 +10,7 @@ import { KnexPlugin, plugin } from '../lib';
 function checkSpanAttributes(
     spans: Readonly<ReadableSpan[]>,
     name: string,
-    code: StatusCode,
+    code: SpanStatusCode,
     stmt: string,
     err?: Error,
 ): void {
@@ -25,8 +25,7 @@ function checkSpanAttributes(
 describe('KnexPlugin', () => {
     let contextManager: AsyncHooksContextManager;
     let connection: knex;
-    const provider = new NodeTracerProvider({ plugins: {} });
-    const logger = new NoopLogger();
+    const provider = new NodeTracerProvider();
     const memoryExporter = new InMemorySpanExporter();
 
     beforeAll(() => {
@@ -45,7 +44,7 @@ describe('KnexPlugin', () => {
         contextManager = new AsyncHooksContextManager().enable();
         context.setGlobalContextManager(contextManager);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        plugin.enable(knex as any, provider, logger);
+        plugin.enable(knex as any, provider);
 
         connection = knex({
             client: 'sqlite',
@@ -76,7 +75,7 @@ describe('KnexPlugin', () => {
             const span = provider.getTracer('default').startSpan('test span');
             context.with(setSpan(context.active(), span), () => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                plugin.enable(knex as any, provider, logger);
+                plugin.enable(knex as any, provider);
                 connection.select(connection.raw('2+2')).finally(() => {
                     const spans = memoryExporter.getFinishedSpans();
                     expect(spans).toHaveLength(1);
@@ -107,7 +106,7 @@ describe('KnexPlugin', () => {
                 connection.select(connection.raw('2+2')).finally(() => {
                     const spans = memoryExporter.getFinishedSpans();
                     expect(spans).toHaveLength(1);
-                    checkSpanAttributes(spans, 'select', StatusCode.OK, 'select 2+2');
+                    checkSpanAttributes(spans, 'select', SpanStatusCode.OK, 'select 2+2');
                     done();
                 });
             });
@@ -119,7 +118,7 @@ describe('KnexPlugin', () => {
             context.with(setSpan(context.active(), span), () => {
                 connection.select(connection.raw('?', 2)).finally(() => {
                     const spans = memoryExporter.getFinishedSpans();
-                    checkSpanAttributes(spans, 'select', StatusCode.OK, 'select ?\nwith [2]');
+                    checkSpanAttributes(spans, 'select', SpanStatusCode.OK, 'select ?\nwith [2]');
                     done();
                 });
             });
@@ -132,7 +131,7 @@ describe('KnexPlugin', () => {
                 connection.raw('SLECT 2+2').catch((e: Error) => {
                     const spans = memoryExporter.getFinishedSpans();
                     expect(spans).toHaveLength(1);
-                    checkSpanAttributes(spans, 'raw', StatusCode.ERROR, 'SLECT 2+2', e);
+                    checkSpanAttributes(spans, 'raw', SpanStatusCode.ERROR, 'SLECT 2+2', e);
                     done();
                 });
             });
@@ -146,7 +145,7 @@ describe('KnexPlugin', () => {
 
             const spans = memoryExporter.getFinishedSpans();
             expect(spans).toHaveLength(1);
-            checkSpanAttributes(spans, 'raw', StatusCode.OK, 'SELECT 2+2');
+            checkSpanAttributes(spans, 'raw', SpanStatusCode.OK, 'SELECT 2+2');
 
             expect(spans[0].spanContext.traceId).toEqual(rootSpan.context().traceId);
             expect(spans[0].parentSpanId).toEqual(rootSpan.context().spanId);
@@ -160,7 +159,7 @@ describe('KnexPlugin', () => {
 
             const spans = memoryExporter.getFinishedSpans();
             expect(spans).toHaveLength(1);
-            checkSpanAttributes(spans, 'select', StatusCode.OK, 'select 2+2');
+            checkSpanAttributes(spans, 'select', SpanStatusCode.OK, 'select 2+2');
 
             expect(spans[0].spanContext.traceId).toEqual(rootSpan.context().traceId);
             expect(spans[0].parentSpanId).toEqual(rootSpan.context().spanId);

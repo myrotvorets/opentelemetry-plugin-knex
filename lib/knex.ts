@@ -1,4 +1,4 @@
-import { Span, SpanKind, StatusCode, context, getSpan, setSpan } from '@opentelemetry/api';
+import { Span, SpanKind, SpanStatusCode, context, getSpan, setSpan } from '@opentelemetry/api';
 import { BasePlugin } from '@opentelemetry/core';
 import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
 import type knexTypes from 'knex';
@@ -93,11 +93,11 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
             const span = self.createSpan(this, query);
             return original.call(this, connection, query).then(
                 (result: unknown) => {
-                    span.setStatus({ code: StatusCode.OK }).end();
+                    span.setStatus({ code: SpanStatusCode.OK }).end();
                     return Promise.resolve(result);
                 },
                 (e: Error) => {
-                    span.setStatus({ code: StatusCode.ERROR, message: e.message }).end();
+                    span.setStatus({ code: SpanStatusCode.ERROR, message: e.message }).end();
                     return Promise.reject(e);
                 },
             );

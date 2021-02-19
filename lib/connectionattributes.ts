@@ -1,8 +1,8 @@
-import { AttributeValue, Attributes } from '@opentelemetry/api';
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
 import type knexTypes from 'knex';
+import { SpanAttributeValue, SpanAttributes } from '@opentelemetry/api';
 
-function findAttribute(where: Record<string, unknown>, keys: string[]): AttributeValue | undefined {
+function findAttribute(where: Record<string, unknown>, keys: string[]): SpanAttributeValue | undefined {
     for (const key of keys) {
         const value = where[key];
         if (typeof value === 'number' || typeof value === 'string' || typeof value === 'boolean') {
@@ -14,13 +14,13 @@ function findAttribute(where: Record<string, unknown>, keys: string[]): Attribut
 }
 
 export class ConnectionAttributes {
-    private readonly attributes: Attributes = {};
+    private readonly attributes: SpanAttributes = {};
 
     public constructor(connection: Readonly<knexTypes.StaticConnectionConfig>) {
         this.parseConnection(connection);
     }
 
-    public getAttributes(): Readonly<Attributes> {
+    public getAttributes(): Readonly<SpanAttributes> {
         return this.attributes;
     }
 
