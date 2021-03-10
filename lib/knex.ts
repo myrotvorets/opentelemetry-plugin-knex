@@ -1,7 +1,7 @@
 import { Span, SpanKind, SpanStatusCode, context, getSpan, setSpan } from '@opentelemetry/api';
 import { BasePlugin } from '@opentelemetry/core';
 import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
-import type knexTypes from 'knex';
+import type { Knex } from 'knex';
 import shimmer from 'shimmer';
 import path from 'path';
 import { ConnectionAttributes } from './connectionattributes';
@@ -27,7 +27,7 @@ const knexVersion = (require(path.join(knexBaseDir, 'package.json')) as IPackage
 
 const _STORED_PARENT_SPAN = Symbol.for('opentelemetry.stored-parent-span');
 
-export class KnexPlugin extends BasePlugin<knexTypes> {
+export class KnexPlugin extends BasePlugin<Knex> {
     public readonly supportedVersions = ['0.21.*'];
     public static readonly COMPONENT = 'knex';
 
@@ -44,10 +44,10 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
         super('@myrotvorets/opentelemetry-plugin-knex', '1.0.0');
     }
 
-    protected patch(): knexTypes {
+    protected patch(): Knex {
         // istanbul ignore else
         if (!this.enabled && this._internalFilesExports.client) {
-            const proto = (this._internalFilesExports.client as ObjectConstructor).prototype as knexTypes.Client;
+            const proto = (this._internalFilesExports.client as ObjectConstructor).prototype as Knex.Client;
             shimmer.massWrap([proto], ['queryBuilder', 'raw'], this.patchAddParentSpan);
             shimmer.wrap(proto, 'query', this.patchQuery);
 
@@ -60,7 +60,7 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
     protected unpatch(): void {
         // istanbul ignore else
         if (this.enabled && this._internalFilesExports.client) {
-            const proto = (this._internalFilesExports.client as ObjectConstructor).prototype as knexTypes.Client;
+            const proto = (this._internalFilesExports.client as ObjectConstructor).prototype as Knex.Client;
             shimmer.massUnwrap([proto], ['query', 'queryBuilder', 'raw']);
             this.enabled = false;
         }
@@ -89,7 +89,7 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
         original: (connection: unknown, obj: unknown) => Promise<unknown>,
     ): ((connection: unknown, obj: KnexQuery | string) => Promise<unknown>) => {
         const self = this;
-        return function (this: knexTypes.Client, connection: unknown, query: KnexQuery | string): Promise<unknown> {
+        return function (this: Knex.Client, connection: unknown, query: KnexQuery | string): Promise<unknown> {
             const span = self.createSpan(this, query);
             return original.call(this, connection, query).then(
                 (result: unknown) => {
@@ -104,7 +104,7 @@ export class KnexPlugin extends BasePlugin<knexTypes> {
         };
     };
 
-    private createSpan(client: knexTypes.Client, query: KnexQuery | string): Span {
+    private createSpan(client: Knex.Client, query: KnexQuery | string): Span {
         const q = typeof query === 'string' ? { sql: query } : query;
         const parentSpan = this.ensureParentSpan(client);
 

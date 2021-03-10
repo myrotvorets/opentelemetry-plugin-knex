@@ -3,7 +3,7 @@ import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { NodeTracerProvider } from '@opentelemetry/node';
 import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
 import { InMemorySpanExporter, ReadableSpan, SimpleSpanProcessor } from '@opentelemetry/tracing';
-import knex from 'knex';
+import { Knex, knex } from 'knex';
 import shimmer from 'shimmer';
 import { KnexPlugin, plugin } from '../lib';
 
@@ -24,7 +24,7 @@ function checkSpanAttributes(
 
 describe('KnexPlugin', () => {
     let contextManager: AsyncHooksContextManager;
-    let connection: knex;
+    let connection: Knex;
     const provider = new NodeTracerProvider();
     const memoryExporter = new InMemorySpanExporter();
 

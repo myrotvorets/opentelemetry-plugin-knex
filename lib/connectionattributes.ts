@@ -1,5 +1,5 @@
 import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
-import type knexTypes from 'knex';
+import type { Knex } from 'knex';
 import { SpanAttributeValue, SpanAttributes } from '@opentelemetry/api';
 
 function findAttribute(where: Record<string, unknown>, keys: string[]): SpanAttributeValue | undefined {
@@ -16,7 +16,7 @@ function findAttribute(where: Record<string, unknown>, keys: string[]): SpanAttr
 export class ConnectionAttributes {
     private readonly attributes: SpanAttributes = {};
 
-    public constructor(connection: Readonly<knexTypes.StaticConnectionConfig>) {
+    public constructor(connection: Readonly<Knex.StaticConnectionConfig>) {
         this.parseConnection(connection);
     }
 
@@ -24,13 +24,13 @@ export class ConnectionAttributes {
         return this.attributes;
     }
 
-    private parseConnection(connection: Readonly<knexTypes.StaticConnectionConfig>): void {
+    private parseConnection(connection: Readonly<Knex.StaticConnectionConfig>): void {
         this.setDbName(connection);
         this.setDbUser(connection);
         this.setNetAttributes(connection);
     }
 
-    private setDbName(connection: Readonly<knexTypes.StaticConnectionConfig>): void {
+    private setDbName(connection: Readonly<Knex.StaticConnectionConfig>): void {
         const database = findAttribute(connection, ['filename', 'db', 'database']);
         // istanbul ignore else
         if (database) {
@@ -38,7 +38,7 @@ export class ConnectionAttributes {
         }
     }
 
-    private setDbUser(connection: Readonly<knexTypes.StaticConnectionConfig>): void {
+    private setDbUser(connection: Readonly<Knex.StaticConnectionConfig>): void {
         const user = findAttribute(connection, ['user']);
         // istanbul ignore if
         if (user) {
@@ -46,7 +46,7 @@ export class ConnectionAttributes {
         }
     }
 
-    private setNetAttributes(connection: Readonly<knexTypes.StaticConnectionConfig>): void {
+    private setNetAttributes(connection: Readonly<Knex.StaticConnectionConfig>): void {
         const host = findAttribute(connection, ['host', 'server']);
         const name = findAttribute(connection, ['unixSocket', 'socketPath']);
         const port = findAttribute(connection, ['port']);
