@@ -28,7 +28,7 @@ const knexVersion = (require(path.join(knexBaseDir, 'package.json')) as IPackage
 const _STORED_PARENT_SPAN = Symbol.for('opentelemetry.stored-parent-span');
 
 export class KnexPlugin extends BasePlugin<Knex> {
-    public readonly supportedVersions = ['0.21.*'];
+    public readonly supportedVersions = ['0.95.*'];
     public static readonly COMPONENT = 'knex';
 
     protected readonly _basedir = knexBaseDir;
