@@ -1,45 +1,109 @@
 name: Publish Package
 
 on:
-  push:
-    tags:
-      - '*'
+  release:
+    types:
+      - released
+  workflow_dispatch:
+    inputs:
+      gpr:
+        default: "yes"
+        description: Publish to GPR?
+        required: true
+
+env:
+  NODE_VERSION: 14
 
 jobs:
-  publish:
+  prepare:
+    name: Prepare the source code
     runs-on: ubuntu-latest
+    if: github.event_name == 'release' || github.event.inputs.npm == 'yes' || github.event.inputs.gpr == 'yes'
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout source
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.release.tag_name }}
 
-      - name: Set up Node.js
+      - name: Set up Node.js environment
         uses: actions/setup-node@v2.1.5
         with:
-          node-version: 12
+          node-version: ${{ env.NODE_VERSION }}
 
-      - name: Run clean install
-        run: npm ci
-
-      - name: Set up Node.js and configure it for GitHub package registry
-        uses: actions/setup-node@v2.1.5
+      - name: Cache Node modules
+        uses: actions/cache@v2.1.4
+        env:
+          cache-name: cache-node-modules
         with:
-          node-version: 12
-          registry-url: https://npm.pkg.github.com/
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ env.NODE_VERSION }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-${{ env.NODE_VERSION }}-
+            ${{ runner.os }}-build-${{ env.cache-name }}-
 
-      - name: Publish to GitHub package registry
-        run: npm publish
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Remove .npmrc created by actions/setup-node
-        run: rm -f "$NPM_CONFIG_USERCONFIG"
+      - name: Run postinstall scripts
+        run: npm rebuild && npm run prepare --if-present
 
-      - name: Set up Node.js and configure it for npmjs package registry
+      - name: Create tarball
+        run: npm pack
+
+      - name: Save tarball
+        uses: actions/upload-artifact@v2
+        with:
+          name: package
+          path: "*.tgz"
+          retention-days: 1
+
+  publish:
+    name: Publish package
+    runs-on: ubuntu-latest
+    needs: prepare
+    strategy:
+      matrix:
+        registry:
+          - gpr
+        include:
+          - registry: gpr
+            secret: GITHUB_TOKEN
+            registry_url: https://npm.pkg.github.com/
+    steps:
+      - name: Set commit status to PENDING
+        uses: myrotvorets/set-commit-status-action@1.0.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          status: pending
+          context: Publish to ${{ matrix.registry }}
+          sha: ${{ github.sha }}
+        if: github.event.inputs[matrix.registry] == 'yes' || github.event_name == 'release'
+
+      - name: Set up Node.js environment
+        if: github.event.inputs[matrix.registry] == 'yes' || github.event_name == 'release'
         uses: actions/setup-node@v2.1.5
         with:
-          node-version: 12
-          registry-url: https://registry.npmjs.org/
+          registry-url: ${{ matrix.registry_url }}
 
-      - name: Publish to npmjs package registry
-        run: npm publish
+      - name: Download tarball
+        if: github.event.inputs[matrix.registry] == 'yes' || github.event_name == 'release'
+        uses: actions/download-artifact@v2
+        with:
+          name: package
+
+      - name: Publish package
+        if: github.event.inputs[matrix.registry] == 'yes' || github.event_name == 'release'
+        run: npm publish *.tgz
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets[matrix.secret] }}
+
+      - name: Set final commit status
+        uses: myrotvorets/set-commit-status-action@1.0.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          status: ${{ job.status }}
+          context: Publish to ${{ matrix.registry }}
+          sha: ${{ github.sha }}
+        if: always() && (github.event.inputs[matrix.registry] == 'yes' || github.event_name == 'release')

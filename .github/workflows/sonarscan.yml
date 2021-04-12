@@ -1,0 +1,69 @@
+name: SonarCloud Analysis
+
+on:
+  push:
+    branches: 
+      - master
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: SonarCloud Scan
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.head_commit.message, '[ci skip]') || github.event_name == 'workflow_dispatch' }}
+    env:
+      NODE_VERSION: '14'
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js environment
+        uses: actions/setup-node@v2.1.5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cache Node modules
+        uses: actions/cache@v2.1.4
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ env.NODE_VERSION }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-${{ env.NODE_VERSION }}-
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run postinstall scripts
+        run: npm rebuild && npm run prepare --if-present
+
+      - name: Run tests
+        run: npm test
+        env:
+          COLLECT_COVERAGE: "1"
+
+      - name: Retrieve information from package.json
+        uses: myrotvorets/info-from-package-json-action@1.0.2
+        id: ver
+
+      - name: Fix paths in test-report.xml
+        run: sed -i "s@$(pwd)@/github/workspace@g" test-report.xml
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectName=${{ steps.ver.outputs.packageName }}
+            -Dsonar.projectVersion=${{ steps.ver.outputs.packageVersion }}
+            -Dsonar.links.homepage=${{ steps.ver.outputs.packageHomepage }}
+            -Dsonar.links.issue=${{ steps.ver.outputs.packageBugsUrl }}
+            -Dsonar.links.scm=${{ steps.ver.outputs.packageScmUrl }}
