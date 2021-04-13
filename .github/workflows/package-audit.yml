@@ -50,7 +50,7 @@ jobs:
           registry-url: https://npm.pkg.github.com
 
       - name: Cache node modules
-        uses: actions/cache@v2.1.4
+        uses: actions/cache@v2.1.5
         env:
           cache-name: cache-node-modules
         with:
