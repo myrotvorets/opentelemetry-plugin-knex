@@ -71,7 +71,7 @@ describe('KnexPlugin', () => {
     });
 
     it('should handle double enable() gracefully', () =>
-        new Promise<void>((done) => {
+        new Promise<void>((resolve) => {
             const span = provider.getTracer('default').startSpan('test span');
             context.with(setSpan(context.active(), span), () => {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -79,13 +79,13 @@ describe('KnexPlugin', () => {
                 connection.select(connection.raw('2+2')).finally(() => {
                     const spans = memoryExporter.getFinishedSpans();
                     expect(spans).toHaveLength(1);
-                    done();
+                    resolve();
                 });
             });
         }));
 
     it('should handle double disable() gracefully', () =>
-        new Promise<void>((done) => {
+        new Promise<void>((resolve) => {
             const span = provider.getTracer('default').startSpan('test span');
             context.with(setSpan(context.active(), span), () => {
                 plugin.disable();
@@ -94,45 +94,45 @@ describe('KnexPlugin', () => {
                 connection.select(connection.raw('2+2')).finally(() => {
                     const spans = memoryExporter.getFinishedSpans();
                     expect(spans).toHaveLength(0);
-                    done();
+                    resolve();
                 });
             });
         }));
 
     it('should name the span accordingly', () =>
-        new Promise<void>((done) => {
+        new Promise<void>((resolve) => {
             const span = provider.getTracer('default').startSpan('test span');
             context.with(setSpan(context.active(), span), () => {
                 connection.select(connection.raw('2+2')).finally(() => {
                     const spans = memoryExporter.getFinishedSpans();
                     expect(spans).toHaveLength(1);
                     checkSpanAttributes(spans, 'select', SpanStatusCode.OK, 'select 2+2');
-                    done();
+                    resolve();
                 });
             });
         }));
 
     it('should add bindings to DB_STATEMENT', () =>
-        new Promise<void>((done) => {
+        new Promise<void>((resolve) => {
             const span = provider.getTracer('default').startSpan('test span');
             context.with(setSpan(context.active(), span), () => {
                 connection.select(connection.raw('?', 2)).finally(() => {
                     const spans = memoryExporter.getFinishedSpans();
                     checkSpanAttributes(spans, 'select', SpanStatusCode.OK, 'select ?\nwith [2]');
-                    done();
+                    resolve();
                 });
             });
         }));
 
     it('should attach error messages to spans', () =>
-        new Promise<void>((done) => {
+        new Promise<void>((resolve) => {
             const span = provider.getTracer('default').startSpan('test span');
             context.with(setSpan(context.active(), span), () => {
                 connection.raw('SLECT 2+2').catch((e: Error) => {
                     const spans = memoryExporter.getFinishedSpans();
                     expect(spans).toHaveLength(1);
                     checkSpanAttributes(spans, 'raw', SpanStatusCode.ERROR, 'SLECT 2+2', e);
-                    done();
+                    resolve();
                 });
             });
         }));
@@ -178,6 +178,7 @@ describe('KnexPlugin', () => {
                 const spans = memoryExporter.getFinishedSpans();
                 expect(spans).toHaveLength(3);
                 expect([...new Set(spans.map((currentSpan) => currentSpan.spanContext.traceId))]).toHaveLength(1);
+                return true;
             });
         });
     });

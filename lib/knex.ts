@@ -94,11 +94,11 @@ export class KnexPlugin extends BasePlugin<Knex> {
             return original.call(this, connection, query).then(
                 (result: unknown) => {
                     span.setStatus({ code: SpanStatusCode.OK }).end();
-                    return Promise.resolve(result);
+                    return result;
                 },
                 (e: Error) => {
                     span.setStatus({ code: SpanStatusCode.ERROR, message: e.message }).end();
-                    return Promise.reject(e);
+                    throw e;
                 },
             );
         };
