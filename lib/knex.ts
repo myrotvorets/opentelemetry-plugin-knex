@@ -1,9 +1,15 @@
-import { Span, SpanKind, SpanStatusCode, context, getSpan, setSpan } from '@opentelemetry/api';
-import { BasePlugin } from '@opentelemetry/core';
-import { DatabaseAttribute } from '@opentelemetry/semantic-conventions';
+/* eslint-disable promise/no-return-wrap */
+import { Span, SpanKind, SpanStatusCode, context, diag, getSpan, setSpan } from '@opentelemetry/api';
+import {
+    InstrumentationBase,
+    InstrumentationConfig,
+    InstrumentationModuleDefinition,
+    InstrumentationNodeModuleDefinition,
+    InstrumentationNodeModuleFile,
+    isWrapped,
+} from '@opentelemetry/instrumentation';
+import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import type { Knex } from 'knex';
-import shimmer from 'shimmer';
-import path from 'path';
 import { ConnectionAttributes } from './connectionattributes';
 
 interface KnexQuery {
@@ -16,58 +22,59 @@ interface KnexQuery {
     sql: string;
 }
 
-interface IPackage {
-    name: string;
-    version: string;
-}
-
-const knexBaseDir = path.dirname(require.resolve('knex'));
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const knexVersion = (require(path.join(knexBaseDir, 'package.json')) as IPackage).version;
+const supportedVersions = ['^0.21.0', '^0.95.0'];
 
 const _STORED_PARENT_SPAN = Symbol.for('opentelemetry.stored-parent-span');
 
-export class KnexPlugin extends BasePlugin<Knex> {
-    public readonly supportedVersions = ['0.95.*'];
+export class KnexPlugin extends InstrumentationBase<Knex> {
     public static readonly COMPONENT = 'knex';
 
-    protected readonly _basedir = knexBaseDir;
-    protected _internalFilesList = {
-        '*': {
-            client: 'lib/client',
-        },
-    };
-
-    private enabled = false;
-
-    public constructor(public readonly moduleName: string, public readonly version: string) {
-        super('@myrotvorets/opentelemetry-plugin-knex', '1.0.0');
+    public constructor(config?: InstrumentationConfig) {
+        super('@myrotvorets/opentelemetry-plugin-knex', '1.0.0', config);
     }
 
-    protected patch(): Knex {
-        // istanbul ignore else
-        if (!this.enabled && this._internalFilesExports.client) {
-            const proto = (this._internalFilesExports.client as ObjectConstructor).prototype as Knex.Client;
-            shimmer.massWrap([proto], ['queryBuilder', 'raw'], this.patchAddParentSpan);
-            shimmer.wrap(proto, 'query', this.patchQuery);
-
-            this.enabled = true;
-        }
-
-        return this._moduleExports;
+    protected init(): InstrumentationModuleDefinition<Knex>[] {
+        const { patch, unpatch } = this.getClientPatches();
+        return [
+            new InstrumentationNodeModuleDefinition<Knex>('knex', supportedVersions, undefined, undefined, [
+                new InstrumentationNodeModuleFile<typeof Knex.Client>(
+                    'knex/lib/client.js',
+                    supportedVersions,
+                    patch,
+                    unpatch,
+                ),
+            ]),
+        ];
     }
 
-    protected unpatch(): void {
-        // istanbul ignore else
-        if (this.enabled && this._internalFilesExports.client) {
-            const proto = (this._internalFilesExports.client as ObjectConstructor).prototype as Knex.Client;
-            shimmer.massUnwrap([proto], ['query', 'queryBuilder', 'raw']);
-            this.enabled = false;
-        }
+    private getClientPatches<T extends typeof Knex.Client>(): {
+        patch: (exports: T, version?: string) => T;
+        unpatch: (exports?: T, version?: string) => void;
+    } {
+        return {
+            patch: (moduleExports: T, moduleVersion?: string): T => {
+                diag.debug(`Applying patch for knex@${moduleVersion}`);
+
+                // istanbul ignore else
+                // eslint-disable-next-line @typescript-eslint/unbound-method
+                if (!isWrapped(moduleExports.prototype.queryBuilder)) {
+                    this._massWrap([moduleExports.prototype], ['queryBuilder', 'raw'], this.patchAddParentSpan);
+                    this._wrap(moduleExports.prototype, 'query', this.patchQuery);
+                }
+
+                return moduleExports;
+            },
+            unpatch: (moduleExports?: T, moduleVersion?: string): void => {
+                // istanbul ignore else
+                if (moduleExports !== undefined) {
+                    diag.debug(`Removing patch for knex@${moduleVersion}`);
+                    this._massUnwrap([moduleExports.prototype], ['query', 'queryBuilder', 'raw']);
+                }
+            },
+        };
     }
 
-    // eslint-disable-next-line class-methods-use-this
-    private ensureParentSpan(fallback: unknown): Span | undefined {
+    private static ensureParentSpan(fallback: unknown): Span | undefined {
         const where = fallback as Record<typeof _STORED_PARENT_SPAN, Span>;
         const span = getSpan(context.active()) || where[_STORED_PARENT_SPAN];
         if (span) {
@@ -77,10 +84,10 @@ export class KnexPlugin extends BasePlugin<Knex> {
         return span;
     }
 
-    private readonly patchAddParentSpan = (original: (...params: unknown[]) => unknown): typeof original => {
-        const self = this;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private readonly patchAddParentSpan = (original: (...params: unknown[]) => any): typeof original => {
         return function (this: unknown, ...params: unknown[]): unknown {
-            self.ensureParentSpan(this);
+            KnexPlugin.ensureParentSpan(this);
             return original.apply(this, params);
         };
     };
@@ -94,11 +101,11 @@ export class KnexPlugin extends BasePlugin<Knex> {
             return original.call(this, connection, query).then(
                 (result: unknown) => {
                     span.setStatus({ code: SpanStatusCode.OK }).end();
-                    return result;
+                    return Promise.resolve(result);
                 },
                 (e: Error) => {
                     span.setStatus({ code: SpanStatusCode.ERROR, message: e.message }).end();
-                    throw e;
+                    return Promise.reject(e);
                 },
             );
         };
@@ -106,21 +113,19 @@ export class KnexPlugin extends BasePlugin<Knex> {
 
     private createSpan(client: Knex.Client, query: KnexQuery | string): Span {
         const q = typeof query === 'string' ? { sql: query } : query;
-        const parentSpan = this.ensureParentSpan(client);
+        const parentSpan = KnexPlugin.ensureParentSpan(client);
 
-        return this._tracer.startSpan(
+        return this.tracer.startSpan(
             q.method ?? q.sql,
             {
                 kind: SpanKind.CLIENT,
                 attributes: {
-                    [DatabaseAttribute.DB_SYSTEM]: client.driverName,
+                    [SemanticAttributes.DB_SYSTEM]: client.driverName,
                     ...new ConnectionAttributes(client.connectionSettings).getAttributes(),
-                    [DatabaseAttribute.DB_STATEMENT]: q.bindings?.length ? `${q.sql}\nwith [${q.bindings}]` : q.sql,
+                    [SemanticAttributes.DB_STATEMENT]: q.bindings?.length ? `${q.sql}\nwith [${q.bindings}]` : q.sql,
                 },
             },
             parentSpan ? setSpan(context.active(), parentSpan) : undefined,
         );
     }
 }
-
-export const plugin = new KnexPlugin('knex', knexVersion);

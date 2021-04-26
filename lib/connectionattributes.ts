@@ -1,4 +1,4 @@
-import { DatabaseAttribute, GeneralAttribute } from '@opentelemetry/semantic-conventions';
+import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import type { Knex } from 'knex';
 import { SpanAttributeValue, SpanAttributes } from '@opentelemetry/api';
 
@@ -34,7 +34,7 @@ export class ConnectionAttributes {
         const database = findAttribute(connection, ['filename', 'db', 'database']);
         // istanbul ignore else
         if (database) {
-            this.attributes[DatabaseAttribute.DB_NAME] = database;
+            this.attributes[SemanticAttributes.DB_NAME] = database;
         }
     }
 
@@ -42,28 +42,22 @@ export class ConnectionAttributes {
         const user = findAttribute(connection, ['user']);
         // istanbul ignore if
         if (user) {
-            this.attributes[DatabaseAttribute.DB_USER] = user;
+            this.attributes[SemanticAttributes.DB_USER] = user;
         }
     }
 
     private setNetAttributes(connection: Readonly<Knex.StaticConnectionConfig>): void {
-        const host = findAttribute(connection, ['host', 'server']);
-        const name = findAttribute(connection, ['unixSocket', 'socketPath']);
+        const name = findAttribute(connection, ['host', 'server', 'unixSocket', 'socketPath']);
         const port = findAttribute(connection, ['port']);
 
         // istanbul ignore if
-        if (host) {
-            this.attributes[GeneralAttribute.NET_PEER_HOSTNAME] = host;
-        }
-
-        // istanbul ignore if
         if (port) {
-            this.attributes[GeneralAttribute.NET_PEER_PORT] = port;
+            this.attributes[SemanticAttributes.NET_PEER_PORT] = port;
         }
 
         // istanbul ignore if
         if (name) {
-            this.attributes[GeneralAttribute.NET_PEER_NAME] = name;
+            this.attributes[SemanticAttributes.NET_PEER_NAME] = name;
         }
     }
 }
