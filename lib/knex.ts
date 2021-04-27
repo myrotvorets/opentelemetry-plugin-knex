@@ -22,7 +22,7 @@ interface KnexQuery {
     sql: string;
 }
 
-const supportedVersions = ['^0.21.0', '^0.95.0'];
+const supportedVersions = ['^0.95.0'];
 
 const _STORED_PARENT_SPAN = Symbol.for('opentelemetry.stored-parent-span');
 
