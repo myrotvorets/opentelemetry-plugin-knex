@@ -26,7 +26,7 @@ const supportedVersions = ['^0.21.0', '^0.95.0'];
 
 const _STORED_PARENT_SPAN = Symbol.for('opentelemetry.stored-parent-span');
 
-export class KnexPlugin extends InstrumentationBase<Knex> {
+export class KnexInstrumentation extends InstrumentationBase<Knex> {
     public static readonly COMPONENT = 'knex';
 
     public constructor(config?: InstrumentationConfig) {
@@ -87,7 +87,7 @@ export class KnexPlugin extends InstrumentationBase<Knex> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private readonly patchAddParentSpan = (original: (...params: unknown[]) => any): typeof original => {
         return function (this: unknown, ...params: unknown[]): unknown {
-            KnexPlugin.ensureParentSpan(this);
+            KnexInstrumentation.ensureParentSpan(this);
             return original.apply(this, params);
         };
     };
@@ -113,7 +113,7 @@ export class KnexPlugin extends InstrumentationBase<Knex> {
 
     private createSpan(client: Knex.Client, query: KnexQuery | string): Span {
         const q = typeof query === 'string' ? { sql: query } : query;
-        const parentSpan = KnexPlugin.ensureParentSpan(client);
+        const parentSpan = KnexInstrumentation.ensureParentSpan(client);
 
         return this.tracer.startSpan(
             q.method ?? q.sql,

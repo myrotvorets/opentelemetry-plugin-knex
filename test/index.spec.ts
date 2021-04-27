@@ -4,7 +4,7 @@ import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { BasicTracerProvider, InMemorySpanExporter, ReadableSpan, SimpleSpanProcessor } from '@opentelemetry/tracing';
 import { Knex, knex } from 'knex';
-import { KnexPlugin } from '../lib';
+import { KnexInstrumentation } from '../lib';
 
 function checkSpanAttributes(
     spans: Readonly<ReadableSpan[]>,
@@ -23,7 +23,7 @@ function checkSpanAttributes(
 }
 
 describe('KnexPlugin', () => {
-    const plugin = new KnexPlugin({ enabled: false });
+    const plugin = new KnexInstrumentation({ enabled: false });
     let connection: Knex;
 
     let contextManager: AsyncHooksContextManager;
@@ -54,7 +54,7 @@ describe('KnexPlugin', () => {
     });
 
     it('should export a plugin', () => {
-        expect(plugin).to.be.instanceOf(KnexPlugin);
+        expect(plugin).to.be.instanceOf(KnexInstrumentation);
     });
 
     it('should have correct instrumentationName', () => {
