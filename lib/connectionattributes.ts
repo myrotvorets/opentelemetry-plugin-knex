@@ -1,6 +1,6 @@
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
-import type { Knex } from 'knex';
 import { SpanAttributeValue, SpanAttributes } from '@opentelemetry/api';
+import type { Knex } from 'knex';
 
 function findAttribute(where: Record<string, unknown>, keys: string[]): SpanAttributeValue | undefined {
     for (const key of keys) {
