@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { SpanStatusCode, context, setSpan } from '@opentelemetry/api';
+import { SpanStatusCode, context, trace } from '@opentelemetry/api';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { BasicTracerProvider, InMemorySpanExporter, ReadableSpan, SimpleSpanProcessor } from '@opentelemetry/tracing';
@@ -64,7 +64,7 @@ describe('KnexPlugin', () => {
     it('should handle double enable() gracefully', function () {
         return new Promise<void>((resolve, reject) => {
             const span = provider.getTracer('default').startSpan('test span');
-            context.with(setSpan(context.active(), span), () => {
+            context.with(trace.setSpan(context.active(), span), () => {
                 plugin.enable();
                 connection
                     .select(connection.raw('2+2'))
@@ -81,7 +81,7 @@ describe('KnexPlugin', () => {
     it('should handle double disable() gracefully', function () {
         return new Promise<void>((resolve, reject) => {
             const span = provider.getTracer('default').startSpan('test span');
-            context.with(setSpan(context.active(), span), () => {
+            context.with(trace.setSpan(context.active(), span), () => {
                 plugin.disable();
                 plugin.disable();
 
@@ -100,7 +100,7 @@ describe('KnexPlugin', () => {
     it('should name the span accordingly', function () {
         return new Promise<void>((resolve, reject) => {
             const span = provider.getTracer('default').startSpan('test span');
-            context.with(setSpan(context.active(), span), () => {
+            context.with(trace.setSpan(context.active(), span), () => {
                 connection
                     .select(connection.raw('2+2'))
                     .finally(() => {
@@ -117,7 +117,7 @@ describe('KnexPlugin', () => {
     it('should add bindings to DB_STATEMENT', function () {
         return new Promise<void>((resolve, reject) => {
             const span = provider.getTracer('default').startSpan('test span');
-            context.with(setSpan(context.active(), span), () => {
+            context.with(trace.setSpan(context.active(), span), () => {
                 connection
                     .select(connection.raw('?', 2))
                     .finally(() => {
@@ -133,7 +133,7 @@ describe('KnexPlugin', () => {
     it('should attach error messages to spans', function () {
         return new Promise<void>((resolve, reject) => {
             const span = provider.getTracer('default').startSpan('test span');
-            context.with(setSpan(context.active(), span), () => {
+            context.with(trace.setSpan(context.active(), span), () => {
                 connection
                     .raw('SLECT 2+2')
                     .catch((e: Error) => {
@@ -150,35 +150,35 @@ describe('KnexPlugin', () => {
     // See https://github.com/wdalmut/opentelemetry-plugin-mongoose/pull/34/files
     it('should handle await on a thenable query object (raw)', function () {
         const rootSpan = provider.getTracer('default').startSpan('test span');
-        return context.with(setSpan(context.active(), rootSpan), async () => {
+        return context.with(trace.setSpan(context.active(), rootSpan), async () => {
             await connection.raw('SELECT 2+2');
 
             const spans = memoryExporter.getFinishedSpans();
             expect(spans).to.have.length(1);
             checkSpanAttributes(spans, 'raw', SpanStatusCode.OK, 'SELECT 2+2');
 
-            expect(spans[0].spanContext.traceId).to.equal(rootSpan.context().traceId);
-            expect(spans[0].parentSpanId).to.equal(rootSpan.context().spanId);
+            expect(spans[0].spanContext().traceId).to.equal(rootSpan.spanContext().traceId);
+            expect(spans[0].parentSpanId).to.equal(rootSpan.spanContext().spanId);
         });
     });
 
     it('should handle await on a thenable query object (query builder)', function () {
         const rootSpan = provider.getTracer('default').startSpan('test span');
-        return context.with(setSpan(context.active(), rootSpan), async () => {
+        return context.with(trace.setSpan(context.active(), rootSpan), async () => {
             await connection.select(connection.raw('2+2'));
 
             const spans = memoryExporter.getFinishedSpans();
             expect(spans).to.have.length(1);
             checkSpanAttributes(spans, 'select', SpanStatusCode.OK, 'select 2+2');
 
-            expect(spans[0].spanContext.traceId).to.equal(rootSpan.context().traceId);
-            expect(spans[0].parentSpanId).to.equal(rootSpan.context().spanId);
+            expect(spans[0].spanContext().traceId).to.equal(rootSpan.spanContext().traceId);
+            expect(spans[0].parentSpanId).to.equal(rootSpan.spanContext().spanId);
         });
     });
 
     it('should handle Promise.all', function () {
         const span = provider.getTracer('default').startSpan('test span');
-        return context.with(setSpan(context.active(), span), async () => {
+        return context.with(trace.setSpan(context.active(), span), async () => {
             return Promise.all([
                 await connection.select(connection.raw('2+2')),
                 await connection.select(connection.raw('3+3')),
@@ -187,7 +187,7 @@ describe('KnexPlugin', () => {
 
                 const spans = memoryExporter.getFinishedSpans();
                 expect(spans).to.have.length(3);
-                expect([...new Set(spans.map((currentSpan) => currentSpan.spanContext.traceId))]).to.have.length(1);
+                expect([...new Set(spans.map((currentSpan) => currentSpan.spanContext().traceId))]).to.have.length(1);
                 return true;
             });
         });
@@ -195,19 +195,19 @@ describe('KnexPlugin', () => {
 
     it('should handle a combined operation with async/await', function () {
         const span = provider.getTracer('default').startSpan('test span');
-        return context.with(setSpan(context.active(), span), async () => {
+        return context.with(trace.setSpan(context.active(), span), async () => {
             await connection.select(connection.raw('2+2'));
             span.end();
 
             const spans = memoryExporter.getFinishedSpans();
             expect(spans).to.have.length(2);
-            expect([...new Set(spans.map((currentSpan) => currentSpan.spanContext.traceId))]).to.have.length(1);
+            expect([...new Set(spans.map((currentSpan) => currentSpan.spanContext().traceId))]).to.have.length(1);
         });
     });
 
     it('should handle transactions', function () {
         const span = provider.getTracer('default').startSpan('test span');
-        return context.with(setSpan(context.active(), span), async () => {
+        return context.with(trace.setSpan(context.active(), span), async () => {
             await connection.transaction((trx) => {
                 return trx.raw('SELECT 2+2');
             });

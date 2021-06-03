@@ -1,5 +1,5 @@
 /* eslint-disable promise/no-return-wrap */
-import { Span, SpanKind, SpanStatusCode, context, diag, getSpan, setSpan } from '@opentelemetry/api';
+import { Span, SpanKind, SpanStatusCode, context, diag, trace } from '@opentelemetry/api';
 import {
     InstrumentationBase,
     InstrumentationConfig,
@@ -76,7 +76,7 @@ export class KnexInstrumentation extends InstrumentationBase<Knex> {
 
     private static ensureParentSpan(fallback: unknown): Span | undefined {
         const where = fallback as Record<typeof _STORED_PARENT_SPAN, Span>;
-        const span = getSpan(context.active()) || where[_STORED_PARENT_SPAN];
+        const span = trace.getSpan(context.active()) || where[_STORED_PARENT_SPAN];
         if (span) {
             where[_STORED_PARENT_SPAN] = span;
         }
@@ -125,7 +125,7 @@ export class KnexInstrumentation extends InstrumentationBase<Knex> {
                     [SemanticAttributes.DB_STATEMENT]: q.bindings?.length ? `${q.sql}\nwith [${q.bindings}]` : q.sql,
                 },
             },
-            parentSpan ? setSpan(context.active(), parentSpan) : undefined,
+            parentSpan ? trace.setSpan(context.active(), parentSpan) : undefined,
         );
     }
 }
