@@ -45,7 +45,7 @@
     "@opentelemetry/api": "^0.21.0",
     "@opentelemetry/core": "^0.21.0",
     "@opentelemetry/instrumentation": "^0.21.0",
-    "@opentelemetry/semantic-conventions": "^0.21.0"
+    "@opentelemetry/semantic-conventions": "^0.22.0"
   },
   "peerDependencies": {
     "knex": "^0.95.0"
