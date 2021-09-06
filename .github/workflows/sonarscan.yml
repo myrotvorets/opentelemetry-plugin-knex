@@ -58,7 +58,7 @@ jobs:
         run: npm run test:coverage -- -R mocha-reporter-sonarqube -O filename=test-report.xml
 
       - name: Retrieve information from package.json
-        uses: myrotvorets/info-from-package-json-action@1.0.5
+        uses: myrotvorets/info-from-package-json-action@1.1.0
         id: ver
 
       - name: Fix paths in test-report.xml
