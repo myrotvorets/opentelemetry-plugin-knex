@@ -26,7 +26,7 @@
     "@opentelemetry/tracing": "^0.24.0",
     "@types/chai": "^4.2.16",
     "@types/mocha": "^9.0.0",
-    "@types/node": "^16.4.0",
+    "@types/node": ">= 12",
     "chai": "^4.3.4",
     "eslint-formatter-gha": "^1.0.2",
     "knex": "^0.95.0",
@@ -35,7 +35,6 @@
     "mocha-github-actions-reporter": "^0.2.3",
     "mocha-reporter-sonarqube": "^2.0.0",
     "nyc": "^15.1.0",
-    "prettier": "^2.2.1",
     "sqlite3": "^5.0.1",
     "ts-node": "^10.0.0",
     "typescript": "^4.1.3"
