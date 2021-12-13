@@ -2,7 +2,12 @@ import { expect } from 'chai';
 import { SpanStatusCode, context, trace } from '@opentelemetry/api';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
-import { BasicTracerProvider, InMemorySpanExporter, ReadableSpan, SimpleSpanProcessor } from '@opentelemetry/tracing';
+import {
+    BasicTracerProvider,
+    InMemorySpanExporter,
+    ReadableSpan,
+    SimpleSpanProcessor,
+} from '@opentelemetry/sdk-trace-base';
 import { Knex, knex } from 'knex';
 import { KnexInstrumentation } from '../lib';
 
