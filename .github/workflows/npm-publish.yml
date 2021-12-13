@@ -30,12 +30,12 @@ jobs:
           ref: ${{ github.event.release.tag_name }}
 
       - name: Set up Node.js environment
-        uses: actions/setup-node@v2.4.1
+        uses: actions/setup-node@v2.5.0
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Cache Node modules
-        uses: actions/cache@v2.1.6
+        uses: actions/cache@v2.1.7
         env:
           cache-name: cache-node-modules
         with:
@@ -91,7 +91,7 @@ jobs:
 
       - name: Set up Node.js environment
         if: github.event.inputs[matrix.registry] == 'yes' || github.event_name == 'release'
-        uses: actions/setup-node@v2.4.1
+        uses: actions/setup-node@v2.5.0
         with:
           registry-url: ${{ matrix.registry_url }}
 
