@@ -20,6 +20,11 @@ jobs:
       github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name && github.event.sender.login != 'dependabot[bot]' ||
       github.event_name == 'push' && !contains(github.event.head_commit.message, '[ci skip]')
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@14dc64f30986eaa2ad2dddcec073f5aab18e5a24
+        with:
+          egress-policy: audit
+
       - name: Run SonarScanner Analysis
         uses: myrotvorets/composite-actions/node-sonarscan@e242c9133e9f398bc640e0f832c5c15f9a343f77
         with:
