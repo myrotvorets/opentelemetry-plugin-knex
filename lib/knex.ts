@@ -22,7 +22,7 @@ interface KnexQuery {
     sql: string;
 }
 
-const supportedVersions = ['^0.95.0'];
+const supportedVersions = ['^0.95.0', '^1.0.0'];
 
 const _STORED_PARENT_SPAN = Symbol.for('opentelemetry.stored-parent-span');
 
@@ -84,7 +84,7 @@ export class KnexInstrumentation extends InstrumentationBase<Knex> {
         return span;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, class-methods-use-this
     private readonly patchAddParentSpan = (original: (...params: unknown[]) => any): typeof original => {
         return function (this: unknown, ...params: unknown[]): unknown {
             KnexInstrumentation.ensureParentSpan(this);
