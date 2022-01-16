@@ -23,7 +23,13 @@ jobs:
       - name: Harden Runner
         uses: step-security/harden-runner@14dc64f30986eaa2ad2dddcec073f5aab18e5a24
         with:
-          egress-policy: audit
+          allowed-endpoints: 
+            api.github.com:443
+            artifactcache.actions.githubusercontent.com:443
+            github.com:443
+            nodejs.org:443
+            registry.npmjs.org:443
+            sonarcloud.io:443
 
       - name: Run SonarScanner Analysis
         uses: myrotvorets/composite-actions/node-sonarscan@e242c9133e9f398bc640e0f832c5c15f9a343f77
