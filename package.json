@@ -7,7 +7,7 @@
     "lint": "eslint -f gha .",
     "lint:fix": "eslint . --fix",
     "pretest": "npm run lint",
-    "test": "mocha",
+    "test": "if [ -z \"${SONARSCANNER}\" ]; then mocha; else nyc --reporter=text --reporter=lcovonly -- mocha -R mocha-reporter-sonarqube -O filename=test-report.xml; fi",
     "pretest:coverage": "npm run lint",
     "test:coverage": "nyc --reporter=text --reporter=lcovonly -- mocha",
     "posttest": "npm run build",
