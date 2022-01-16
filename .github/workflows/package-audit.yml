@@ -34,15 +34,5 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@14dc64f30986eaa2ad2dddcec073f5aab18e5a24
-        with:
-          allowed-endpoints: 
-            api.github.com:443
-            artifactcache.actions.githubusercontent.com:443
-            github.com:443
-            raw.githubusercontent.com:443
-            registry.npmjs.org:443
-
       - name: Audit with Retire.js
         uses: myrotvorets/composite-actions/node-package-audit-retirejs@65ce5d1dc756890cbe83a7beb75592f18368cf7c
