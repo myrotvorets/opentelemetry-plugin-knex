@@ -22,7 +22,7 @@ jobs:
     name: Build and test (Node ${{ matrix.node }})
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@14dc64f30986eaa2ad2dddcec073f5aab18e5a24
+        uses: step-security/harden-runner@0045e636d87a56c1dca21729e8cfc97d6d994de5
         with:
           egress-policy: audit
 
