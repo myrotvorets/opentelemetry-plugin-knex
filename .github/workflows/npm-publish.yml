@@ -25,17 +25,17 @@ jobs:
     if: github.event_name == 'release' || github.event.inputs.npm == 'yes' || github.event.inputs.gpr == 'yes'
     steps:
       - name: Checkout source
-        uses: actions/checkout@v2.4.0
+        uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579 # renovate: tag=v2.4.0
         with:
           ref: ${{ github.event.release.tag_name }}
 
       - name: Set up Node.js environment
-        uses: actions/setup-node@v2.5.1
+        uses: actions/setup-node@1f8c6b94b26d0feae1e387ca63ccbdc44d27b561 # renovate: tag=v2.5.1
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Cache Node modules
-        uses: actions/cache@v2.1.7
+        uses: actions/cache@937d24475381cd9c75ae6db12cb4e79714b926ed # renovate: tag=v2.1.7
         env:
           cache-name: cache-node-modules
         with:
@@ -57,7 +57,7 @@ jobs:
         run: npm pack
 
       - name: Save tarball
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@82c141cc518b40d92cc801eee768e7aafc9c2fa2 # renovate: tag=v2
         with:
           name: package
           path: "*.tgz"
@@ -81,7 +81,7 @@ jobs:
             registry_url: https://npm.pkg.github.com/
     steps:
       - name: Set commit status to PENDING
-        uses: myrotvorets/set-commit-status-action@1.1.4
+        uses: myrotvorets/set-commit-status-action@5b39333f62641d4fe9c0967572f738a4aea8a15b # renovate: tag=1.1.4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           status: pending
@@ -91,13 +91,13 @@ jobs:
 
       - name: Set up Node.js environment
         if: github.event.inputs[matrix.registry] == 'yes' || github.event_name == 'release'
-        uses: actions/setup-node@v2.5.1
+        uses: actions/setup-node@1f8c6b94b26d0feae1e387ca63ccbdc44d27b561 # renovate: tag=v2.5.1
         with:
           registry-url: ${{ matrix.registry_url }}
 
       - name: Download tarball
         if: github.event.inputs[matrix.registry] == 'yes' || github.event_name == 'release'
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@f023be2c48cc18debc3bacd34cb396e0295e2869 # renovate: tag=v2
         with:
           name: package
 
@@ -108,7 +108,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets[matrix.secret] }}
 
       - name: Set final commit status
-        uses: myrotvorets/set-commit-status-action@1.1.4
+        uses: myrotvorets/set-commit-status-action@5b39333f62641d4fe9c0967572f738a4aea8a15b # renovate: tag=1.1.4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           status: ${{ job.status }}
