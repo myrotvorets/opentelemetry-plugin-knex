@@ -25,7 +25,7 @@ jobs:
     if: github.event_name == 'release' || github.event.inputs.npm == 'yes' || github.event.inputs.gpr == 'yes'
     steps:
       - name: Checkout source
-        uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579 # renovate: tag=v2.4.0
+        uses: actions/checkout@f25a3a9f25bd5f4c5d77189cab02ff357b5aedeb # tag=v2.4.1
         with:
           ref: ${{ github.event.release.tag_name }}
 
