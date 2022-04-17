@@ -27,6 +27,6 @@ jobs:
           egress-policy: audit
 
       - name: Build and test
-        uses: myrotvorets/composite-actions/build-test-nodejs@03b93a8a8a80fd0694274536d4a3e8d23483f602
+        uses: myrotvorets/composite-actions/build-test-nodejs@5573b17456a9a09ef7ffcab4d716237f37334fe6
         with:
           node-version: ${{ matrix.node }}
