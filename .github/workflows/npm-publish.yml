@@ -35,7 +35,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Cache Node modules
-        uses: actions/cache@48af2dc4a9e8278b89d7fa154b955c30c6aaab09 # tag=v3.0.2
+        uses: actions/cache@30f413bfed0a2bc738fdfd409e5a9e96b24545fd # tag=v3.0.3
         env:
           cache-name: cache-node-modules
         with:
