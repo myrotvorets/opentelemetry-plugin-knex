@@ -42,7 +42,7 @@ jobs:
       contents: write
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@14dc64f30986eaa2ad2dddcec073f5aab18e5a24
+        uses: step-security/harden-runner@dd5681a7d0c66fb362664d618ef4a90d656f6516
         with:
           egress-policy: audit
 
