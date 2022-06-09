@@ -10,7 +10,8 @@ on:
       - .github/workflows/package-audit.yml
   workflow_dispatch:
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
   audit-npm:
