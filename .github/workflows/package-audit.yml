@@ -27,7 +27,7 @@ jobs:
             registry.npmjs.org:443
 
       - name: Audit with NPM
-        uses: myrotvorets/composite-actions/node-package-audit@5f395133f2239693b2bc3de99ecdfdce1bd89e91
+        uses: myrotvorets/composite-actions/node-package-audit@f5929cd7f1261437eddec5bd8fb4d045ca17ab62
 
   audit-retire:
     name: RetireJS Check
@@ -40,4 +40,4 @@ jobs:
           egress-policy: audit
 
       - name: Audit with Retire.js
-        uses: myrotvorets/composite-actions/node-package-audit-retirejs@5f395133f2239693b2bc3de99ecdfdce1bd89e91
+        uses: myrotvorets/composite-actions/node-package-audit-retirejs@f5929cd7f1261437eddec5bd8fb4d045ca17ab62
