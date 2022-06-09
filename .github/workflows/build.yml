@@ -51,6 +51,12 @@ jobs:
       - name: Install knex
         run: npm i -D knex@${{ matrix.knex }}
 
+      - name: Install @vscode/sqlite3
+        run: |
+          npm r sqlite3
+          npm i -D @vscode/sqlite3
+        if: ${{ matrix.knex == '^1.0.0' }}
+
       - name: Run tests
         run: npm test
         env:
