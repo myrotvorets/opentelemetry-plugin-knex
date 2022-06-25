@@ -75,7 +75,7 @@ jobs:
             registry_url: https://npm.pkg.github.com/
     steps:
       - name: Set commit status to PENDING
-        uses: myrotvorets/set-commit-status-action@5b39333f62641d4fe9c0967572f738a4aea8a15b # renovate: tag=1.1.4
+        uses: myrotvorets/set-commit-status-action@74391422f441069685b0836133f6117f286debe5 # tag=1.1.5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           status: pending
@@ -102,7 +102,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets[matrix.secret] }}
 
       - name: Set final commit status
-        uses: myrotvorets/set-commit-status-action@5b39333f62641d4fe9c0967572f738a4aea8a15b # renovate: tag=1.1.4
+        uses: myrotvorets/set-commit-status-action@74391422f441069685b0836133f6117f286debe5 # tag=1.1.5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           status: ${{ job.status }}
