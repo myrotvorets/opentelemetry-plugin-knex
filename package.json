@@ -46,7 +46,7 @@
     "@opentelemetry/semantic-conventions": "^1.0.0"
   },
   "peerDependencies": {
-    "knex": "^0.95.0 || ^1.0.0 || ^2.0.0"
+    "knex": "^1.0.0 || ^2.0.0"
   },
   "main": "dist/lib/index.js",
   "repository": {
