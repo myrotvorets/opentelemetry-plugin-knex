@@ -52,7 +52,7 @@ jobs:
           node-version: lts/*
 
       - name: Create a release
-        uses: softprops/action-gh-release@b4025e2cdd6e8c3ebde4107d4b5a6bac5e66818b
+        uses: softprops/action-gh-release@9114792eb2fcdea3dbb139ffd081fcb856870dcf
         if: startsWith(github.ref, 'refs/tags/')
         with:
           generate_release_notes: true
