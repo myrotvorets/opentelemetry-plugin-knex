@@ -21,7 +21,6 @@ jobs:
           - 'current'
           - 'lts/*'
           - 'lts/-1'
-          - 'lts/-2'
         knex:
           - '^1.0.0'
           - '^2.0.0'
@@ -40,9 +39,6 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: npm
-
-      - name: Update npm
-        run: npm i -g npm@latest
 
       - name: Install dependencies
         run: npm ci
