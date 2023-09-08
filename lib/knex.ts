@@ -76,7 +76,7 @@ export class KnexInstrumentation extends InstrumentationBase<Knex> {
 
     private static ensureParentSpan(fallback: unknown): Span | undefined {
         const where = fallback as Record<typeof _STORED_PARENT_SPAN, Span>;
-        const span = trace.getSpan(context.active()) || where[_STORED_PARENT_SPAN];
+        const span = trace.getSpan(context.active()) ?? where[_STORED_PARENT_SPAN];
         if (span) {
             where[_STORED_PARENT_SPAN] = span;
         }
