@@ -1,22 +1,20 @@
 {
-  "compilerOptions": {
-      "target": "es2022",
-      "module": "CommonJS",
-      "noEmitOnError": true,
-      "outDir": "./dist",
-      "rootDirs": ["./lib", "./test"],
-      "sourceMap": false,
-      "declaration": true,
-      "removeComments": false,
-      "strict": true,
-      "noUnusedLocals": true,
-      "noUnusedParameters": false,
-      "noFallthroughCasesInSwitch": true,
-      "esModuleInterop": true,
-      "resolveJsonModule": true,
-      "typeRoots": [
-          "./node_modules/@types/"
-      ]
-  },
-  "compileOnSave": true
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "Node16",
+        "moduleResolution": "Node16",
+        "outDir": "./dist",
+        "rootDirs": ["./lib", "./test"],
+        "sourceMap": false,
+        "declaration": true,
+        "removeComments": false,
+        "strict": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": false,
+        "noFallthroughCasesInSwitch": true,
+        "esModuleInterop": true,
+        "resolveJsonModule": true
+    },
+    "exclude": ["dist", "example"],
+    "compileOnSave": true
 }

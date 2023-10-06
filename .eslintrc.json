@@ -6,11 +6,6 @@
   "extends": [
     "@myrotvorets/myrotvorets-ts"
   ],
-  "rules": {
-    "jest/no-commented-out-tests": "off",
-    "jest/no-done-callback": "off",
-    "jest/valid-expect": "off"
-  },
   "env": {
     "node": true,
     "jest": false,
