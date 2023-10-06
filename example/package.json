@@ -17,7 +17,7 @@
     "@opentelemetry/sdk-node": "^0.43.0",
     "better-sqlite3": "^8.7.0",
     "knex": "^3.0.1",
-    "node-fetch": "^2.6.7"
+    "node-fetch": "^3.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.8.2",
