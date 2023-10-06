@@ -16,7 +16,7 @@ function checkSpanAttributes(
     name: string,
     code: SpanStatusCode,
     stmt: string,
-    err?: Error,
+    err?: Error & { code?: string },
 ): void {
     expect(spans[0].name).to.have.length.above(0);
     expect(spans[0].name).to.equal(name);
@@ -24,7 +24,15 @@ function checkSpanAttributes(
     expect(spans[0].attributes[SemanticAttributes.DB_SYSTEM]).to.equal('sqlite3');
     expect(spans[0].attributes[SemanticAttributes.DB_NAME]).to.equal(':memory:');
     expect(spans[0].attributes[SemanticAttributes.DB_STATEMENT]).to.equal(stmt);
-    expect(spans[0].status.message).to.equal(err?.message);
+    if (err) {
+        expect(spans[0].events).to.be.an('array').and.have.length(1);
+        expect(spans[0].events[0].attributes)
+            .to.be.an('object')
+            .that.includes({
+                'exception.type': err?.code ?? err?.name,
+                'exception.message': err?.message,
+            });
+    }
 }
 
 describe('KnexPlugin', () => {

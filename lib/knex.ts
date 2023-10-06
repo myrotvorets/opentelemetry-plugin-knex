@@ -1,9 +1,8 @@
-/* eslint-disable promise/no-return-wrap */
-import { Span, SpanKind, SpanStatusCode, context, diag, trace } from '@opentelemetry/api';
+import { type Span, SpanKind, SpanStatusCode, context, diag, trace } from '@opentelemetry/api';
 import {
     InstrumentationBase,
-    InstrumentationConfig,
-    InstrumentationModuleDefinition,
+    type InstrumentationConfig,
+    type InstrumentationModuleDefinition,
     InstrumentationNodeModuleDefinition,
     InstrumentationNodeModuleFile,
     isWrapped,
@@ -86,7 +85,7 @@ export class KnexInstrumentation extends InstrumentationBase<Knex> {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, class-methods-use-this
     private readonly patchAddParentSpan = (original: (...params: unknown[]) => any): typeof original => {
-        return function (this: unknown, ...params: unknown[]): unknown /* NOSONAR */ {
+        return function (this: unknown, ...params: unknown[]): unknown {
             KnexInstrumentation.ensureParentSpan(this);
             return original.apply(this, params);
         };
@@ -96,20 +95,17 @@ export class KnexInstrumentation extends InstrumentationBase<Knex> {
         original: (connection: unknown, obj: unknown) => Promise<unknown>,
     ): ((connection: unknown, obj: KnexQuery | string) => Promise<unknown>) => {
         const self = this;
-        return function (
-            this: Knex.Client /* NOSONAR */,
-            connection: unknown,
-            query: KnexQuery | string,
-        ): Promise<unknown> {
+        return function (this: Knex.Client, connection: unknown, query: KnexQuery | string): Promise<unknown> {
             const span = self.createSpan(this, query);
             return original.call(this, connection, query).then(
                 (result: unknown) => {
                     span.setStatus({ code: SpanStatusCode.OK }).end();
-                    return Promise.resolve(result);
+                    return result;
                 },
                 (e: Error) => {
-                    span.setStatus({ code: SpanStatusCode.ERROR, message: e.message }).end();
-                    return Promise.reject(e);
+                    span.recordException(e);
+                    span.setStatus({ code: SpanStatusCode.ERROR }).end();
+                    throw e;
                 },
             );
         };

@@ -30,7 +30,13 @@ jobs:
       - name: Harden Runner
         uses: step-security/harden-runner@1b05615854632b887b69ae1be8cbefe72d3ae423 # v2.6.0
         with:
-          egress-policy: audit
+          disable-sudo: true
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            nodejs.org:443
+            registry.npmjs.org:443
 
       - name: Check out the code
         uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
@@ -55,5 +61,23 @@ jobs:
 
       - name: Run tests
         run: npm test
-        env:
-          COLLECT_COVERAGE: "0"
+
+  lint:
+    name: Check Code Style
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.head_commit.message, '[ci skip]') || github.event_name == 'workflow_dispatch' }}
+    steps:
+      - name: Run cose style check
+        uses: myrotvorets/composite-actions/node-run-script@master
+        with:
+          script: lint
+
+  typecheck:
+    name: Check Types
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.head_commit.message, '[ci skip]') || github.event_name == 'workflow_dispatch' }}
+    steps:
+      - name: Run type check
+        uses: myrotvorets/composite-actions/node-run-script@master
+        with:
+          script: typecheck

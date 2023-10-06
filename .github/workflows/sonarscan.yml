@@ -30,3 +30,4 @@ jobs:
         uses: myrotvorets/composite-actions/node-sonarscan@85c640fcc951d6a5fd6c9660f8334e22ceaf2959
         with:
           sonar-token: ${{ secrets.SONAR_TOKEN }}
+          test-script: test:coverage
