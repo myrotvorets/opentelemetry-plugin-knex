@@ -20,4 +20,4 @@ const sdk = new NodeSDK({
 sdk.start();
 ```
 
-See the `example` directory for a working example.
+See the [`example`](example) directory for a working example.
