@@ -24,6 +24,7 @@ jobs:
         knex:
           - '^1.0.0'
           - '^2.0.0'
+          - '^3.0.1'
     name: Build and test (Node ${{ matrix.node }}, knex ${{ matrix.knex }})
     steps:
       - name: Harden Runner
