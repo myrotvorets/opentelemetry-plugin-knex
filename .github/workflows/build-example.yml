@@ -1,0 +1,41 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Build and Test Sample Code
+
+on:
+  push:
+    branches:
+      - '**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.head_commit.message, '[ci skip]') || github.event_name == 'workflow_dispatch' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        node:
+          - 'current'
+          - 'lts/*'
+          - 'lts/-1'
+    name: Build and test (Node ${{ matrix.node }})
+    steps:
+      - name: Prepare the source
+        uses: myrotvorets/composite-actions/build-test-nodejs@master
+        with:
+          node-version: ${{ matrix.node }}
+          run-tests: no
+
+      - name: Install dependencies (example)
+        run: npm ci
+        working-directory: example
+
+      - name: Build
+        run: npm run build && (cd example && npm run build)
+
+      - name: Smoke test
+        run: npx ts-node src/index.ts
+        working-directory: example

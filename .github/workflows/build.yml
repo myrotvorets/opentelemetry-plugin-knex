@@ -67,7 +67,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ !contains(github.event.head_commit.message, '[ci skip]') || github.event_name == 'workflow_dispatch' }}
     steps:
-      - name: Run cose style check
+      - name: Run code style check
         uses: myrotvorets/composite-actions/node-run-script@master
         with:
           script: lint

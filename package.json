@@ -9,7 +9,7 @@
     "lint:fix": "eslint . --fix",
     "test": "mocha test",
     "test:coverage": "nyc --reporter=text --reporter=lcovonly -- mocha",
-    "prepare": "npm run build"
+    "prepack": "npm run build"
   },
   "author": "Myrotvorets <support@myrotvorets.center> (https://myrotvorets.center/)",
   "license": "MIT",
