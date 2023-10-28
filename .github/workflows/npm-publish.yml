@@ -35,6 +35,7 @@ jobs:
       contents: read
       packages: write
       statuses: write
+      id-token: write
     strategy:
       matrix:
         registry:
