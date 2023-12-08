@@ -35,7 +35,7 @@
     "mocha-reporter-sonarqube": "^2.0.5",
     "nyc": "^15.1.0",
     "sqlite3": "^5.1.6",
-    "ts-node": "^10.9.1",
+    "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   },
   "dependencies": {
