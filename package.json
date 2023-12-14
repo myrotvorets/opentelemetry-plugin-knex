@@ -20,8 +20,8 @@
   "typings": "dist/lib/index.d.ts",
   "devDependencies": {
     "@myrotvorets/eslint-config-myrotvorets-ts": "^2.24.0",
-    "@opentelemetry/context-async-hooks": "^1.18.1",
-    "@opentelemetry/sdk-trace-base": "^1.18.1",
+    "@opentelemetry/context-async-hooks": "^1.19.0",
+    "@opentelemetry/sdk-trace-base": "^1.19.0",
     "@types/chai": "^4.3.11",
     "@types/mocha": "^10.0.6",
     "@types/node": ">= 20.10.4",
