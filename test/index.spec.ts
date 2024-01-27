@@ -1,4 +1,3 @@
-import { expect } from 'chai';
 import { SpanStatusCode, context, trace } from '@opentelemetry/api';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
@@ -10,6 +9,10 @@ import {
 } from '@opentelemetry/sdk-trace-base';
 import { Knex, knex } from 'knex';
 import { KnexInstrumentation } from '../lib';
+
+declare global {
+    const expect: typeof chai.expect;
+}
 
 function checkSpanAttributes(
     spans: Readonly<ReadableSpan[]>,
@@ -29,8 +32,8 @@ function checkSpanAttributes(
         expect(spans[0].events[0].attributes)
             .to.be.an('object')
             .that.includes({
-                'exception.type': err?.code ?? err?.name,
-                'exception.message': err?.message,
+                'exception.type': err.code ?? err.name,
+                'exception.message': err.message,
             });
     }
 }

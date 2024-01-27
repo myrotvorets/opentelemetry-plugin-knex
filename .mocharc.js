@@ -3,7 +3,8 @@
 module.exports = {
     recursive: true,
     extension: ['.spec.ts'],
-    require: 'ts-node/register',
+    'node-option': ['loader=ts-node/esm', 'no-warnings'],
+    require: ['chai/register-expect.js', 'ts-node/register'],
     reporter: 'mocha-multi',
     'reporter-option': [
         'spec=-',
