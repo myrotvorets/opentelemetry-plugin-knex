@@ -24,7 +24,7 @@
     "@opentelemetry/sdk-trace-base": "^1.21.0",
     "@types/chai": "^4.3.11",
     "@types/mocha": "^10.0.6",
-    "@types/node": ">= 20.11.9",
+    "@types/node": ">= 20.11.10",
     "chai": "^5.0.3",
     "eslint-formatter-gha": "^1.4.3",
     "knex": "^3.0.1",
