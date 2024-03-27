@@ -1,5 +1,10 @@
-import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
 import { AttributeValue, Attributes } from '@opentelemetry/api';
+import {
+    SEMATTRS_DB_NAME,
+    SEMATTRS_DB_USER,
+    SEMATTRS_NET_PEER_NAME,
+    SEMATTRS_NET_PEER_PORT,
+} from '@opentelemetry/semantic-conventions';
 import type { Knex } from 'knex';
 
 function findAttribute(where: Record<string, unknown>, keys: string[]): AttributeValue | undefined {
@@ -34,7 +39,7 @@ export class ConnectionAttributes {
         const database = findAttribute(connection, ['filename', 'db', 'database']);
         // istanbul ignore else
         if (database) {
-            this.attributes[SemanticAttributes.DB_NAME] = database;
+            this.attributes[SEMATTRS_DB_NAME] = database;
         }
     }
 
@@ -42,7 +47,7 @@ export class ConnectionAttributes {
         const user = findAttribute(connection, ['user']);
         // istanbul ignore if
         if (user) {
-            this.attributes[SemanticAttributes.DB_USER] = user;
+            this.attributes[SEMATTRS_DB_USER] = user;
         }
     }
 
@@ -52,12 +57,12 @@ export class ConnectionAttributes {
 
         // istanbul ignore if
         if (port) {
-            this.attributes[SemanticAttributes.NET_PEER_PORT] = port;
+            this.attributes[SEMATTRS_NET_PEER_PORT] = port;
         }
 
         // istanbul ignore if
         if (name) {
-            this.attributes[SemanticAttributes.NET_PEER_NAME] = name;
+            this.attributes[SEMATTRS_NET_PEER_NAME] = name;
         }
     }
 }

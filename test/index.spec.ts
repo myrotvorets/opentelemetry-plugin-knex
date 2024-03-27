@@ -1,6 +1,6 @@
 import { SpanStatusCode, context, trace } from '@opentelemetry/api';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
-import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import { SEMATTRS_DB_NAME, SEMATTRS_DB_STATEMENT, SEMATTRS_DB_SYSTEM } from '@opentelemetry/semantic-conventions';
 import {
     BasicTracerProvider,
     InMemorySpanExporter,
@@ -21,15 +21,15 @@ function checkSpanAttributes(
     stmt: string,
     err?: Error & { code?: string },
 ): void {
-    expect(spans[0].name).to.have.length.above(0);
-    expect(spans[0].name).to.equal(name);
-    expect(spans[0].status.code).to.equal(code);
-    expect(spans[0].attributes[SemanticAttributes.DB_SYSTEM]).to.equal('sqlite3');
-    expect(spans[0].attributes[SemanticAttributes.DB_NAME]).to.equal(':memory:');
-    expect(spans[0].attributes[SemanticAttributes.DB_STATEMENT]).to.equal(stmt);
+    expect(spans[0]!.name).to.have.length.above(0);
+    expect(spans[0]!.name).to.equal(name);
+    expect(spans[0]!.status.code).to.equal(code);
+    expect(spans[0]!.attributes[SEMATTRS_DB_SYSTEM]).to.equal('sqlite3');
+    expect(spans[0]!.attributes[SEMATTRS_DB_NAME]).to.equal(':memory:');
+    expect(spans[0]!.attributes[SEMATTRS_DB_STATEMENT]).to.equal(stmt);
     if (err) {
-        expect(spans[0].events).to.be.an('array').and.have.length(1);
-        expect(spans[0].events[0].attributes)
+        expect(spans[0]!.events).to.be.an('array').and.have.length(1);
+        expect(spans[0]!.events[0]!.attributes)
             .to.be.an('object')
             .that.includes({
                 'exception.type': err.code ?? err.name,
@@ -89,6 +89,7 @@ describe('KnexPlugin', () => {
                         expect(spans).to.be.an('array').and.have.length(1);
                         resolve();
                     })
+                    // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
                     .catch(reject);
             });
         });
@@ -108,6 +109,7 @@ describe('KnexPlugin', () => {
                         expect(spans).to.have.length(0);
                         resolve();
                     })
+                    // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
                     .catch(reject);
             });
         });
@@ -125,6 +127,7 @@ describe('KnexPlugin', () => {
                         checkSpanAttributes(spans, 'select', SpanStatusCode.OK, 'select 2+2');
                         resolve();
                     })
+                    // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
                     .catch(reject);
             });
         });
@@ -141,6 +144,7 @@ describe('KnexPlugin', () => {
                         checkSpanAttributes(spans, 'select', SpanStatusCode.OK, 'select ?\nwith [2]');
                         resolve();
                     })
+                    // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
                     .catch(reject);
             });
         });
@@ -152,12 +156,13 @@ describe('KnexPlugin', () => {
             context.with(trace.setSpan(context.active(), span), () => {
                 connection
                     .raw('SLECT 2+2')
-                    .catch((e: Error) => {
+                    .catch((e: unknown) => {
                         const spans = memoryExporter.getFinishedSpans();
                         expect(spans).to.have.length(1);
-                        checkSpanAttributes(spans, 'raw', SpanStatusCode.ERROR, 'SLECT 2+2', e);
+                        checkSpanAttributes(spans, 'raw', SpanStatusCode.ERROR, 'SLECT 2+2', e as Error);
                         resolve();
                     })
+                    // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
                     .catch(reject);
             });
         });
@@ -173,8 +178,8 @@ describe('KnexPlugin', () => {
             expect(spans).to.have.length(1);
             checkSpanAttributes(spans, 'raw', SpanStatusCode.OK, 'SELECT 2+2');
 
-            expect(spans[0].spanContext().traceId).to.equal(rootSpan.spanContext().traceId);
-            expect(spans[0].parentSpanId).to.equal(rootSpan.spanContext().spanId);
+            expect(spans[0]!.spanContext().traceId).to.equal(rootSpan.spanContext().traceId);
+            expect(spans[0]!.parentSpanId).to.equal(rootSpan.spanContext().spanId);
         });
     });
 
@@ -187,8 +192,8 @@ describe('KnexPlugin', () => {
             expect(spans).to.have.length(1);
             checkSpanAttributes(spans, 'select', SpanStatusCode.OK, 'select 2+2');
 
-            expect(spans[0].spanContext().traceId).to.equal(rootSpan.spanContext().traceId);
-            expect(spans[0].parentSpanId).to.equal(rootSpan.spanContext().spanId);
+            expect(spans[0]!.spanContext().traceId).to.equal(rootSpan.spanContext().traceId);
+            expect(spans[0]!.parentSpanId).to.equal(rootSpan.spanContext().spanId);
         });
     });
 
@@ -230,7 +235,7 @@ describe('KnexPlugin', () => {
 
             const spans = memoryExporter.getFinishedSpans();
             expect(spans).to.have.length(3);
-            expect(spans[1].name).to.equal('raw');
+            expect(spans[1]!.name).to.equal('raw');
         });
     });
 });

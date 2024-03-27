@@ -7,7 +7,7 @@ import {
     InstrumentationNodeModuleFile,
     isWrapped,
 } from '@opentelemetry/instrumentation';
-import { SemanticAttributes } from '@opentelemetry/semantic-conventions';
+import { SEMATTRS_DB_STATEMENT, SEMATTRS_DB_SYSTEM } from '@opentelemetry/semantic-conventions';
 import type { Knex } from 'knex';
 import { ConnectionAttributes } from './connectionattributes';
 
@@ -74,7 +74,7 @@ export class KnexInstrumentation extends InstrumentationBase<Knex> {
     }
 
     private static ensureParentSpan(fallback: unknown): Span | undefined {
-        const where = fallback as Record<typeof _STORED_PARENT_SPAN, Span>;
+        const where = fallback as Record<typeof _STORED_PARENT_SPAN, Span | undefined>;
         const span = trace.getSpan(context.active()) ?? where[_STORED_PARENT_SPAN];
         if (span) {
             where[_STORED_PARENT_SPAN] = span;
@@ -83,7 +83,7 @@ export class KnexInstrumentation extends InstrumentationBase<Knex> {
         return span;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, class-methods-use-this
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/class-methods-use-this
     private readonly patchAddParentSpan = (original: (...params: unknown[]) => any): typeof original => {
         return function (this: unknown, ...params: unknown[]): unknown {
             KnexInstrumentation.ensureParentSpan(this);
@@ -120,9 +120,9 @@ export class KnexInstrumentation extends InstrumentationBase<Knex> {
             {
                 kind: SpanKind.CLIENT,
                 attributes: {
-                    [SemanticAttributes.DB_SYSTEM]: client.driverName,
+                    [SEMATTRS_DB_SYSTEM]: client.driverName,
                     ...new ConnectionAttributes(client.connectionSettings).getAttributes(),
-                    [SemanticAttributes.DB_STATEMENT]: q.bindings?.length ? `${q.sql}\nwith [${q.bindings}]` : q.sql,
+                    [SEMATTRS_DB_STATEMENT]: q.bindings?.length ? `${q.sql}\nwith [${q.bindings}]` : q.sql,
                 },
             },
             parentSpan ? trace.setSpan(context.active(), parentSpan) : undefined,
