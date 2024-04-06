@@ -27,7 +27,7 @@ jobs:
           egress-policy: audit
 
       - name: Run SonarScanner Analysis
-        uses: myrotvorets/composite-actions/node-sonarscan@b964a71618ff00079854d515cc02d1d6c9f5f191
+        uses: myrotvorets/composite-actions/node-sonarscan@a4569ba2c6b7ab6ea2660ed5a63b2a8e7353d02d
         with:
           sonar-token: ${{ secrets.SONAR_TOKEN }}
           test-script: test:coverage
