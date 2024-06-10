@@ -33,7 +33,7 @@
     "mocha-multi": "^1.1.7",
     "mocha-reporter-gha": "^1.1.1",
     "mocha-reporter-sonarqube": "^2.0.6",
-    "nyc": "^15.1.0",
+    "nyc": "^17.0.0",
     "sqlite3": "^5.1.7",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
