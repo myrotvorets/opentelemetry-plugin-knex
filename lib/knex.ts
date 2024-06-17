@@ -25,23 +25,18 @@ const supportedVersions = ['^1.0.0', '^2.0.0', '^3.0.0'];
 
 const _STORED_PARENT_SPAN = Symbol.for('opentelemetry.stored-parent-span');
 
-export class KnexInstrumentation extends InstrumentationBase<Knex> {
+export class KnexInstrumentation extends InstrumentationBase {
     public static readonly COMPONENT = 'knex';
 
     public constructor(config?: InstrumentationConfig) {
-        super('@myrotvorets/opentelemetry-plugin-knex', '1.0.0', config);
+        super('@myrotvorets/opentelemetry-plugin-knex', '1.0.0', config ?? {});
     }
 
-    protected init(): InstrumentationModuleDefinition<Knex>[] {
+    protected init(): InstrumentationModuleDefinition[] {
         const { patch, unpatch } = this.getClientPatches();
         return [
-            new InstrumentationNodeModuleDefinition<Knex>('knex', supportedVersions, undefined, undefined, [
-                new InstrumentationNodeModuleFile<typeof Knex.Client>(
-                    'knex/lib/client.js',
-                    supportedVersions,
-                    patch,
-                    unpatch,
-                ),
+            new InstrumentationNodeModuleDefinition('knex', supportedVersions, undefined, undefined, [
+                new InstrumentationNodeModuleFile('knex/lib/client.js', supportedVersions, patch, unpatch),
             ]),
         ];
     }
