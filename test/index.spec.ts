@@ -15,7 +15,7 @@ declare global {
 }
 
 function checkSpanAttributes(
-    spans: Readonly<ReadableSpan[]>,
+    spans: readonly ReadableSpan[],
     name: string,
     code: SpanStatusCode,
     stmt: string,
