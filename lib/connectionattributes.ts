@@ -1,10 +1,11 @@
 import { AttributeValue, Attributes } from '@opentelemetry/api';
 import {
-    SEMATTRS_DB_NAME,
-    SEMATTRS_DB_USER,
-    SEMATTRS_NET_PEER_NAME,
-    SEMATTRS_NET_PEER_PORT,
-} from '@opentelemetry/semantic-conventions';
+    ATTR_DB_NAMESPACE,
+    // eslint-disable-next-line import/no-deprecated, sonarjs/deprecation
+    ATTR_DB_USER,
+    ATTR_NETWORK_PEER_PORT,
+    ATTR_SERVER_ADDRESS,
+} from '@opentelemetry/semantic-conventions/incubating';
 import type { Knex } from 'knex';
 
 // eslint-disable-next-line sonarjs/function-return-type
@@ -40,7 +41,7 @@ export class ConnectionAttributes {
         const database = findAttribute(connection, ['filename', 'db', 'database']);
         // istanbul ignore else
         if (database) {
-            this.attributes[SEMATTRS_DB_NAME] = database;
+            this.attributes[ATTR_DB_NAMESPACE] = database;
         }
     }
 
@@ -48,7 +49,8 @@ export class ConnectionAttributes {
         const user = findAttribute(connection, ['user']);
         // istanbul ignore if
         if (user) {
-            this.attributes[SEMATTRS_DB_USER] = user;
+            // eslint-disable-next-line sonarjs/deprecation
+            this.attributes[ATTR_DB_USER] = user;
         }
     }
 
@@ -58,12 +60,12 @@ export class ConnectionAttributes {
 
         // istanbul ignore if
         if (port) {
-            this.attributes[SEMATTRS_NET_PEER_PORT] = port;
+            this.attributes[ATTR_NETWORK_PEER_PORT] = port;
         }
 
         // istanbul ignore if
         if (name) {
-            this.attributes[SEMATTRS_NET_PEER_NAME] = name;
+            this.attributes[ATTR_SERVER_ADDRESS] = name;
         }
     }
 }

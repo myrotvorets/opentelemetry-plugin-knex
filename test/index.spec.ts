@@ -1,7 +1,6 @@
 /* eslint-disable sonarjs/no-nested-functions */
 import { SpanStatusCode, context, trace } from '@opentelemetry/api';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
-import { SEMATTRS_DB_NAME, SEMATTRS_DB_STATEMENT, SEMATTRS_DB_SYSTEM } from '@opentelemetry/semantic-conventions';
 import {
     BasicTracerProvider,
     InMemorySpanExporter,
@@ -9,6 +8,7 @@ import {
     SimpleSpanProcessor,
 } from '@opentelemetry/sdk-trace-base';
 import { Knex, knex } from 'knex';
+import { ATTR_DB_NAMESPACE, ATTR_DB_QUERY_TEXT, ATTR_DB_SYSTEM } from '@opentelemetry/semantic-conventions/incubating';
 import { KnexInstrumentation } from '../lib';
 
 declare global {
@@ -25,9 +25,9 @@ function checkSpanAttributes(
     expect(spans[0]!.name).to.have.length.above(0);
     expect(spans[0]!.name).to.equal(name);
     expect(spans[0]!.status.code).to.equal(code);
-    expect(spans[0]!.attributes[SEMATTRS_DB_SYSTEM]).to.equal('sqlite3');
-    expect(spans[0]!.attributes[SEMATTRS_DB_NAME]).to.equal(':memory:');
-    expect(spans[0]!.attributes[SEMATTRS_DB_STATEMENT]).to.equal(stmt);
+    expect(spans[0]!.attributes[ATTR_DB_SYSTEM]).to.equal('sqlite3');
+    expect(spans[0]!.attributes[ATTR_DB_NAMESPACE]).to.equal(':memory:');
+    expect(spans[0]!.attributes[ATTR_DB_QUERY_TEXT]).to.equal(stmt);
     if (err) {
         expect(spans[0]!.events).to.be.an('array').and.have.length(1);
         expect(spans[0]!.events[0]!.attributes)
