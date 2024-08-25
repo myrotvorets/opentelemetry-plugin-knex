@@ -97,10 +97,11 @@ export class KnexInstrumentation extends InstrumentationBase {
                     span.setStatus({ code: SpanStatusCode.OK }).end();
                     return result;
                 },
-                (e: Error) => {
-                    span.recordException(e);
+                (e: unknown) => {
+                    const err = e instanceof Error ? e : new Error(String(e), { cause: e });
+                    span.recordException(err);
                     span.setStatus({ code: SpanStatusCode.ERROR }).end();
-                    throw e;
+                    throw err;
                 },
             );
         };

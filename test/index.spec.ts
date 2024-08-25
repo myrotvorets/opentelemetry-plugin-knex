@@ -1,3 +1,4 @@
+/* eslint-disable sonarjs/no-nested-functions */
 import { SpanStatusCode, context, trace } from '@opentelemetry/api';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import { SEMATTRS_DB_NAME, SEMATTRS_DB_STATEMENT, SEMATTRS_DB_SYSTEM } from '@opentelemetry/semantic-conventions';
