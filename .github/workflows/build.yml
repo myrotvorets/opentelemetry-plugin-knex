@@ -4,11 +4,18 @@ name: Build and Test
 on:
   push:
     branches:
-      - '**'
+      - master
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
+
+env:
+  NPM_CONFIG_FUND: '0'
+  NPM_CONFIG_AUDIT: '0'
+  SUPPRESS_SUPPORT: '1'
+  NO_UPDATE_NOTIFIER: 'true'
 
 jobs:
   build:
@@ -35,6 +42,7 @@ jobs:
           allowed-endpoints: >
             api.github.com:443
             github.com:443
+            objects.githubusercontent.com:443
             nodejs.org:443
             registry.npmjs.org:443
 
@@ -61,23 +69,3 @@ jobs:
 
       - name: Run tests
         run: npm test
-
-  lint:
-    name: Check Code Style
-    runs-on: ubuntu-latest
-    if: ${{ !contains(github.event.head_commit.message, '[ci skip]') || github.event_name == 'workflow_dispatch' }}
-    steps:
-      - name: Run code style check
-        uses: myrotvorets/composite-actions/node-run-script@master
-        with:
-          script: lint
-
-  typecheck:
-    name: Check Types
-    runs-on: ubuntu-latest
-    if: ${{ !contains(github.event.head_commit.message, '[ci skip]') || github.event_name == 'workflow_dispatch' }}
-    steps:
-      - name: Run type check
-        uses: myrotvorets/composite-actions/node-run-script@master
-        with:
-          script: typecheck

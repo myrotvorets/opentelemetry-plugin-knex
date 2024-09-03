@@ -1,9 +1,11 @@
-name: Pre-release Testing
+name: Linting
 
 on:
   push:
-    tags:
-      - "**"
+    branches:
+      - master
+  pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -15,8 +17,8 @@ env:
   NO_UPDATE_NOTIFIER: 'true'
 
 jobs:
-  build:
-    name: Build and test
+  lint:
+    name: ESLint Check
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -33,15 +35,16 @@ jobs:
             nodejs.org:443
             registry.npmjs.org:443
 
-      - name: Build and test
-        uses: myrotvorets/composite-actions/build-test-nodejs@master
+      - name: Run code style check
+        uses: myrotvorets/composite-actions/node-run-script@master
+        with:
+          script: lint
 
-  release:
-    name: Prepare the release
+  typecheck:
+    name: TypeScript Check
     runs-on: ubuntu-latest
-    needs: build
     permissions:
-      contents: write
+      contents: read
     steps:
       - name: Harden Runner
         uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
@@ -51,13 +54,11 @@ jobs:
           allowed-endpoints: >
             api.github.com:443
             github.com:443
+            objects.githubusercontent.com:443
+            nodejs.org:443
+            registry.npmjs.org:443
 
-      - name: Checkout
-        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-
-      - name: Create a release
-        uses: softprops/action-gh-release@c062e08bd532815e2082a85e87e3ef29c3e6d191 # v2.0.8
+      - name: Run type check
+        uses: myrotvorets/composite-actions/node-run-script@master
         with:
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.REPOSITORY_ACCESS_TOKEN }}
+          script: typecheck
