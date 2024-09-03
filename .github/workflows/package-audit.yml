@@ -21,10 +21,13 @@ jobs:
       - name: Harden Runner
         uses: step-security/harden-runner@5c7944e73c4c2a096b17a9cb74d65b6c2bbafbde # v2.9.1
         with:
-          allowed-endpoints: 
+          disable-sudo: true
+          allowed-endpoints:
             api.github.com:443
             github.com:443
+            objects.githubusercontent.com:443
+            nodejs.org:443
             registry.npmjs.org:443
 
       - name: Audit with NPM
-        uses: myrotvorets/composite-actions/node-package-audit@931ae3fec4810f7d263d28f6cf12159080b76208
+        uses: myrotvorets/composite-actions/node-package-audit@master

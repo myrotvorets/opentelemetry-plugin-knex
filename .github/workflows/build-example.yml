@@ -1,10 +1,10 @@
-# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 name: Build and Test Sample Code
 
 on:
   push:
     branches:
-      - '**'
+      - master
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -13,7 +13,6 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: ${{ !contains(github.event.head_commit.message, '[ci skip]') || github.event_name == 'workflow_dispatch' }}
     strategy:
       fail-fast: false
       matrix:
@@ -22,6 +21,8 @@ jobs:
           - 'lts/*'
           - 'lts/-1'
     name: Build and test (Node ${{ matrix.node }})
+    permissions:
+      contents: read
     steps:
       - name: Prepare the source
         uses: myrotvorets/composite-actions/build-test-nodejs@master
