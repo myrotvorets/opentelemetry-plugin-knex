@@ -49,7 +49,7 @@ export class ConnectionAttributes {
         const user = findAttribute(connection, ['user']);
         // istanbul ignore if
         if (user) {
-            // eslint-disable-next-line sonarjs/deprecation
+            // eslint-disable-next-line sonarjs/deprecation, @typescript-eslint/no-deprecated
             this.attributes[ATTR_DB_USER] = user;
         }
     }
