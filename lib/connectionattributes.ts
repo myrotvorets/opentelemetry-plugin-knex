@@ -1,7 +1,7 @@
 import { AttributeValue, Attributes } from '@opentelemetry/api';
 import {
     ATTR_DB_NAMESPACE,
-    // eslint-disable-next-line import/no-deprecated, sonarjs/deprecation
+    // eslint-disable-next-line import/no-deprecated, sonarjs/deprecation, @typescript-eslint/no-deprecated
     ATTR_DB_USER,
     ATTR_NETWORK_PEER_PORT,
     ATTR_SERVER_ADDRESS,
