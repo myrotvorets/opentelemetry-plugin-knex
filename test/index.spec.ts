@@ -44,10 +44,11 @@ describe('KnexPlugin', () => {
     let connection: Knex;
 
     let contextManager: AsyncHooksContextManager;
-    const provider = new BasicTracerProvider();
-    plugin.setTracerProvider(provider);
     const memoryExporter = new InMemorySpanExporter();
-    provider.addSpanProcessor(new SimpleSpanProcessor(memoryExporter));
+    const provider = new BasicTracerProvider({
+        spanProcessors: [new SimpleSpanProcessor(memoryExporter)],
+    });
+    plugin.setTracerProvider(provider);
 
     beforeEach(() => {
         contextManager = new AsyncHooksContextManager().enable();
