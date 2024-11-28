@@ -1,8 +1,6 @@
 import { AttributeValue, Attributes } from '@opentelemetry/api';
 import {
     ATTR_DB_NAMESPACE,
-    // eslint-disable-next-line import/no-deprecated, sonarjs/deprecation, @typescript-eslint/no-deprecated
-    ATTR_DB_USER,
     ATTR_NETWORK_PEER_PORT,
     ATTR_SERVER_ADDRESS,
 } from '@opentelemetry/semantic-conventions/incubating';
@@ -33,7 +31,6 @@ export class ConnectionAttributes {
 
     private parseConnection(connection: Readonly<Knex.StaticConnectionConfig>): void {
         this.setDbName(connection);
-        this.setDbUser(connection);
         this.setNetAttributes(connection);
     }
 
@@ -42,15 +39,6 @@ export class ConnectionAttributes {
         // istanbul ignore else
         if (database) {
             this.attributes[ATTR_DB_NAMESPACE] = database;
-        }
-    }
-
-    private setDbUser(connection: Readonly<Knex.StaticConnectionConfig>): void {
-        const user = findAttribute(connection, ['user']);
-        // istanbul ignore if
-        if (user) {
-            // eslint-disable-next-line sonarjs/deprecation, @typescript-eslint/no-deprecated
-            this.attributes[ATTR_DB_USER] = user;
         }
     }
 
