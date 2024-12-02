@@ -29,7 +29,7 @@
     "eslint-formatter-gha": "^1.5.0",
     "knex": "^3.0.1",
     "merge": "^2.1.1",
-    "mocha": "^10.7.3",
+    "mocha": "^11.0.0",
     "mocha-multi": "^1.1.7",
     "mocha-reporter-gha": "^1.1.1",
     "mocha-reporter-sonarqube": "^2.0.6",
