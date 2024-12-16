@@ -1,4 +1,5 @@
 /* eslint-disable sonarjs/no-nested-functions */
+import { equal, notEqual } from 'node:assert/strict';
 import { SpanStatusCode, type TracerProvider, context, trace } from '@opentelemetry/api';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import {
@@ -11,10 +12,6 @@ import { Knex, knex } from 'knex';
 import { ATTR_DB_NAMESPACE, ATTR_DB_QUERY_TEXT, ATTR_DB_SYSTEM } from '@opentelemetry/semantic-conventions/incubating';
 import { KnexInstrumentation } from '../lib';
 
-declare global {
-    const expect: typeof chai.expect;
-}
-
 function checkSpanAttributes(
     spans: readonly ReadableSpan[],
     name: string,
@@ -22,20 +19,18 @@ function checkSpanAttributes(
     stmt: string,
     err?: Error & { code?: string },
 ): void {
-    expect(spans[0]!.name).to.have.length.above(0);
-    expect(spans[0]!.name).to.equal(name);
-    expect(spans[0]!.status.code).to.equal(code);
-    expect(spans[0]!.attributes[ATTR_DB_SYSTEM]).to.equal('sqlite3');
-    expect(spans[0]!.attributes[ATTR_DB_NAMESPACE]).to.equal(':memory:');
-    expect(spans[0]!.attributes[ATTR_DB_QUERY_TEXT]).to.equal(stmt);
+    equal(spans[0]!.name.length > 0, true);
+    equal(spans[0]!.name, name);
+    equal(spans[0]!.status.code, code);
+    equal(spans[0]!.attributes[ATTR_DB_SYSTEM], 'sqlite3');
+    equal(spans[0]!.attributes[ATTR_DB_NAMESPACE], ':memory:');
+    equal(spans[0]!.attributes[ATTR_DB_QUERY_TEXT], stmt);
     if (err) {
-        expect(spans[0]!.events).to.be.an('array').and.have.length(1);
-        expect(spans[0]!.events[0]!.attributes)
-            .to.be.an('object')
-            .that.includes({
-                'exception.type': err.code ?? err.name,
-                'exception.message': err.message,
-            });
+        equal(Array.isArray(spans[0]!.events), true);
+        equal(spans[0]!.events.length, 1);
+        notEqual(spans[0]!.events[0]!.attributes, undefined);
+        equal(spans[0]!.events[0]!.attributes!['exception.type'], err.code ?? err.name);
+        equal(spans[0]!.events[0]!.attributes!['exception.message'], err.message);
     }
 }
 
@@ -78,11 +73,11 @@ describe('KnexPlugin', function () {
     });
 
     it('should export a plugin', function () {
-        expect(plugin).to.be.instanceOf(KnexInstrumentation);
+        equal(plugin instanceof KnexInstrumentation, true);
     });
 
     it('should have correct instrumentationName', function () {
-        expect(plugin.instrumentationName).to.equal('@myrotvorets/opentelemetry-plugin-knex');
+        equal(plugin.instrumentationName, '@myrotvorets/opentelemetry-plugin-knex');
     });
 
     it('should handle double enable() gracefully', function () {
@@ -94,7 +89,8 @@ describe('KnexPlugin', function () {
                     .select(connection.raw('2+2'))
                     .finally(() => {
                         const spans = memoryExporter.getFinishedSpans();
-                        expect(spans).to.be.an('array').and.have.length(1);
+                        equal(Array.isArray(spans), true);
+                        equal(spans.length, 1);
                         resolve();
                     })
                     .catch(reject);
@@ -113,7 +109,8 @@ describe('KnexPlugin', function () {
                     .select(connection.raw('2+2'))
                     .finally(() => {
                         const spans = memoryExporter.getFinishedSpans();
-                        expect(spans).to.have.length(0);
+                        equal(Array.isArray(spans), true);
+                        equal(spans.length, 0);
                         resolve();
                     })
                     .catch(reject);
@@ -129,7 +126,8 @@ describe('KnexPlugin', function () {
                     .select(connection.raw('2+2'))
                     .finally(() => {
                         const spans = memoryExporter.getFinishedSpans();
-                        expect(spans).to.have.length(1);
+                        equal(Array.isArray(spans), true);
+                        equal(spans.length, 1);
                         checkSpanAttributes(spans, 'select', SpanStatusCode.OK, 'select 2+2');
                         resolve();
                     })
@@ -162,7 +160,8 @@ describe('KnexPlugin', function () {
                     .raw('SLECT 2+2')
                     .catch((e: unknown) => {
                         const spans = memoryExporter.getFinishedSpans();
-                        expect(spans).to.have.length(1);
+                        equal(Array.isArray(spans), true);
+                        equal(spans.length, 1);
                         checkSpanAttributes(spans, 'raw', SpanStatusCode.ERROR, 'SLECT 2+2', e as Error);
                         resolve();
                     })
@@ -178,11 +177,12 @@ describe('KnexPlugin', function () {
             await connection.raw('SELECT 2+2');
 
             const spans = memoryExporter.getFinishedSpans();
-            expect(spans).to.have.length(1);
+            equal(Array.isArray(spans), true);
+            equal(spans.length, 1);
             checkSpanAttributes(spans, 'raw', SpanStatusCode.OK, 'SELECT 2+2');
 
-            expect(spans[0]!.spanContext().traceId).to.equal(rootSpan.spanContext().traceId);
-            expect(spans[0]!.parentSpanId).to.equal(rootSpan.spanContext().spanId);
+            equal(spans[0]!.spanContext().traceId, rootSpan.spanContext().traceId);
+            equal(spans[0]!.parentSpanId, rootSpan.spanContext().spanId);
         });
     });
 
@@ -192,11 +192,12 @@ describe('KnexPlugin', function () {
             await connection.select(connection.raw('2+2'));
 
             const spans = memoryExporter.getFinishedSpans();
-            expect(spans).to.have.length(1);
+            equal(Array.isArray(spans), true);
+            equal(spans.length, 1);
             checkSpanAttributes(spans, 'select', SpanStatusCode.OK, 'select 2+2');
 
-            expect(spans[0]!.spanContext().traceId).to.equal(rootSpan.spanContext().traceId);
-            expect(spans[0]!.parentSpanId).to.equal(rootSpan.spanContext().spanId);
+            equal(spans[0]!.spanContext().traceId, rootSpan.spanContext().traceId);
+            equal(spans[0]!.parentSpanId, rootSpan.spanContext().spanId);
         });
     });
 
@@ -210,8 +211,9 @@ describe('KnexPlugin', function () {
                 span.end();
 
                 const spans = memoryExporter.getFinishedSpans();
-                expect(spans).to.have.length(3);
-                expect([...new Set(spans.map((currentSpan) => currentSpan.spanContext().traceId))]).to.have.length(1);
+                equal(Array.isArray(spans), true);
+                equal(spans.length, 3);
+                equal([...new Set(spans.map((currentSpan) => currentSpan.spanContext().traceId))].length, 1);
                 return true;
             });
         });
@@ -224,8 +226,9 @@ describe('KnexPlugin', function () {
             span.end();
 
             const spans = memoryExporter.getFinishedSpans();
-            expect(spans).to.have.length(2);
-            expect([...new Set(spans.map((currentSpan) => currentSpan.spanContext().traceId))]).to.have.length(1);
+            equal(Array.isArray(spans), true);
+            equal(spans.length, 2);
+            equal([...new Set(spans.map((currentSpan) => currentSpan.spanContext().traceId))].length, 1);
         });
     });
 
@@ -237,8 +240,9 @@ describe('KnexPlugin', function () {
             });
 
             const spans = memoryExporter.getFinishedSpans();
-            expect(spans).to.have.length(3);
-            expect(spans[1]!.name).to.equal('raw');
+            equal(Array.isArray(spans), true);
+            equal(spans.length, 3);
+            equal(spans[1]!.name, 'raw');
         });
     });
 });
