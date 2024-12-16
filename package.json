@@ -27,6 +27,7 @@
     "@types/node": ">=22.5.0",
     "chai": "^5.1.1",
     "eslint-formatter-gha": "^1.5.0",
+    "eslint-plugin-mocha": "^10.5.0",
     "knex": "^3.0.1",
     "merge": "^2.1.1",
     "mocha": "^11.0.0",
