@@ -6,7 +6,6 @@ import {
 } from '@opentelemetry/semantic-conventions/incubating';
 import type { Knex } from 'knex';
 
-// eslint-disable-next-line sonarjs/function-return-type
 function findAttribute(where: Record<string, unknown>, keys: string[]): AttributeValue | undefined {
     for (const key of keys) {
         const value = where[key];

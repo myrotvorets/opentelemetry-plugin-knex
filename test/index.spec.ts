@@ -1,10 +1,10 @@
 /* eslint-disable sonarjs/no-nested-functions */
-import { SpanStatusCode, context, trace } from '@opentelemetry/api';
+import { SpanStatusCode, type TracerProvider, context, trace } from '@opentelemetry/api';
 import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
 import {
     BasicTracerProvider,
     InMemorySpanExporter,
-    ReadableSpan,
+    type ReadableSpan,
     SimpleSpanProcessor,
 } from '@opentelemetry/sdk-trace-base';
 import { Knex, knex } from 'knex';
@@ -39,18 +39,24 @@ function checkSpanAttributes(
     }
 }
 
-describe('KnexPlugin', () => {
-    const plugin = new KnexInstrumentation({ enabled: false });
+describe('KnexPlugin', function () {
+    let plugin: KnexInstrumentation;
     let connection: Knex;
 
     let contextManager: AsyncHooksContextManager;
-    const memoryExporter = new InMemorySpanExporter();
-    const provider = new BasicTracerProvider({
-        spanProcessors: [new SimpleSpanProcessor(memoryExporter)],
-    });
-    plugin.setTracerProvider(provider);
+    let memoryExporter: InMemorySpanExporter;
+    let provider: TracerProvider;
 
-    beforeEach(() => {
+    before(function () {
+        plugin = new KnexInstrumentation({ enabled: false });
+        memoryExporter = new InMemorySpanExporter();
+        provider = new BasicTracerProvider({
+            spanProcessors: [new SimpleSpanProcessor(memoryExporter)],
+        });
+        plugin.setTracerProvider(provider);
+    });
+
+    beforeEach(function () {
         contextManager = new AsyncHooksContextManager().enable();
         context.setGlobalContextManager(contextManager);
         plugin.enable();
@@ -64,18 +70,18 @@ describe('KnexPlugin', () => {
         });
     });
 
-    afterEach(() => {
+    afterEach(function () {
         context.disable();
         memoryExporter.reset();
         plugin.disable();
         return connection.destroy();
     });
 
-    it('should export a plugin', () => {
+    it('should export a plugin', function () {
         expect(plugin).to.be.instanceOf(KnexInstrumentation);
     });
 
-    it('should have correct instrumentationName', () => {
+    it('should have correct instrumentationName', function () {
         expect(plugin.instrumentationName).to.equal('@myrotvorets/opentelemetry-plugin-knex');
     });
 
@@ -91,7 +97,6 @@ describe('KnexPlugin', () => {
                         expect(spans).to.be.an('array').and.have.length(1);
                         resolve();
                     })
-                    // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
                     .catch(reject);
             });
         });
@@ -111,7 +116,6 @@ describe('KnexPlugin', () => {
                         expect(spans).to.have.length(0);
                         resolve();
                     })
-                    // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
                     .catch(reject);
             });
         });
@@ -129,7 +133,6 @@ describe('KnexPlugin', () => {
                         checkSpanAttributes(spans, 'select', SpanStatusCode.OK, 'select 2+2');
                         resolve();
                     })
-                    // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
                     .catch(reject);
             });
         });
@@ -146,7 +149,6 @@ describe('KnexPlugin', () => {
                         checkSpanAttributes(spans, 'select', SpanStatusCode.OK, 'select ?\nwith [2]');
                         resolve();
                     })
-                    // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
                     .catch(reject);
             });
         });
@@ -164,7 +166,6 @@ describe('KnexPlugin', () => {
                         checkSpanAttributes(spans, 'raw', SpanStatusCode.ERROR, 'SLECT 2+2', e as Error);
                         resolve();
                     })
-                    // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
                     .catch(reject);
             });
         });
