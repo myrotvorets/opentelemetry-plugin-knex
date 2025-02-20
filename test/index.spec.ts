@@ -9,7 +9,11 @@ import {
     SimpleSpanProcessor,
 } from '@opentelemetry/sdk-trace-base';
 import { Knex, knex } from 'knex';
-import { ATTR_DB_NAMESPACE, ATTR_DB_QUERY_TEXT, ATTR_DB_SYSTEM } from '@opentelemetry/semantic-conventions/incubating';
+import {
+    ATTR_DB_NAMESPACE,
+    ATTR_DB_QUERY_TEXT,
+    ATTR_DB_SYSTEM_NAME,
+} from '@opentelemetry/semantic-conventions/incubating';
 import { KnexInstrumentation } from '../lib';
 
 function checkSpanAttributes(
@@ -22,7 +26,7 @@ function checkSpanAttributes(
     equal(spans[0]!.name.length > 0, true);
     equal(spans[0]!.name, name);
     equal(spans[0]!.status.code, code);
-    equal(spans[0]!.attributes[ATTR_DB_SYSTEM], 'sqlite3');
+    equal(spans[0]!.attributes[ATTR_DB_SYSTEM_NAME], 'sqlite3');
     equal(spans[0]!.attributes[ATTR_DB_NAMESPACE], ':memory:');
     equal(spans[0]!.attributes[ATTR_DB_QUERY_TEXT], stmt);
     if (err) {

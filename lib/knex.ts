@@ -8,7 +8,7 @@ import {
     isWrapped,
 } from '@opentelemetry/instrumentation';
 import type { Knex } from 'knex';
-import { ATTR_DB_QUERY_TEXT, ATTR_DB_SYSTEM } from '@opentelemetry/semantic-conventions/incubating';
+import { ATTR_DB_QUERY_TEXT, ATTR_DB_SYSTEM_NAME } from '@opentelemetry/semantic-conventions/incubating';
 import { ConnectionAttributes } from './connectionattributes';
 
 interface KnexQuery {
@@ -116,7 +116,7 @@ export class KnexInstrumentation extends InstrumentationBase {
             {
                 kind: SpanKind.CLIENT,
                 attributes: {
-                    [ATTR_DB_SYSTEM]: client.driverName,
+                    [ATTR_DB_SYSTEM_NAME]: client.driverName,
                     ...new ConnectionAttributes(client.connectionSettings).getAttributes(),
                     [ATTR_DB_QUERY_TEXT]: q.bindings?.length ? `${q.sql}\nwith [${q.bindings}]` : q.sql,
                 },
