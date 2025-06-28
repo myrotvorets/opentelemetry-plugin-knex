@@ -8,7 +8,7 @@ export default [
         ignores: ['dist/**', 'example/**'],
     },
     ...MyrotvoretsConfig,
-    MochaPlugin.configs.flat.recommended,
+    MochaPlugin.configs.recommended,
     {
         languageOptions: {
             globals: {
