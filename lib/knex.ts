@@ -8,7 +8,7 @@ import {
     isWrapped,
 } from '@opentelemetry/instrumentation';
 import type { Knex } from 'knex';
-import { ATTR_DB_QUERY_TEXT, ATTR_DB_SYSTEM_NAME } from '@opentelemetry/semantic-conventions/incubating';
+import { ATTR_DB_QUERY_TEXT, ATTR_DB_SYSTEM_NAME } from '@opentelemetry/semantic-conventions';
 import { ConnectionAttributes } from './connectionattributes';
 
 interface KnexQuery {

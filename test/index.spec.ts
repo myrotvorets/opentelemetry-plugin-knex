@@ -9,11 +9,7 @@ import {
     SimpleSpanProcessor,
 } from '@opentelemetry/sdk-trace-base';
 import { Knex, knex } from 'knex';
-import {
-    ATTR_DB_NAMESPACE,
-    ATTR_DB_QUERY_TEXT,
-    ATTR_DB_SYSTEM_NAME,
-} from '@opentelemetry/semantic-conventions/incubating';
+import { ATTR_DB_NAMESPACE, ATTR_DB_QUERY_TEXT, ATTR_DB_SYSTEM_NAME } from '@opentelemetry/semantic-conventions';
 import { KnexInstrumentation } from '../lib';
 
 function checkSpanAttributes(
