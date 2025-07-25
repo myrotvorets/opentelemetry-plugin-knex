@@ -26,18 +26,6 @@ jobs:
       contents: read
     if: github.event_name == 'release' || github.event.inputs.npm == 'yes' || github.event.inputs.gpr == 'yes'
     steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
-        with:
-          disable-sudo: true
-          egress-policy: block
-          allowed-endpoints: >
-            api.github.com:443
-            github.com:443
-            objects.githubusercontent.com:443
-            nodejs.org:443
-            registry.npmjs.org:443
-
       - name: Prepare source
         uses: myrotvorets/composite-actions/node-prepublish@master
 
@@ -63,21 +51,6 @@ jobs:
             secret: GITHUB_TOKEN
             registry_url: https://npm.pkg.github.com/
     steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
-        with:
-          disable-sudo: true
-          egress-policy: block
-          allowed-endpoints: >
-            api.github.com:443
-            github.com:443
-            objects.githubusercontent.com:443
-            nodejs.org:443
-            fulcio.sigstore.dev:443
-            registry.npmjs.org:443
-            rekor.sigstore.dev:443
-            npm.pkg.github.com:443
-
       - name: Publish package
         uses: myrotvorets/composite-actions/node-publish@master
         with:

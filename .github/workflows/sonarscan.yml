@@ -23,24 +23,6 @@ jobs:
       github.event_name != 'pull_request' ||
       github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name
     steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
-        with:
-          disable-sudo: true
-          egress-policy: block
-          allowed-endpoints: >
-            api.github.com:443
-            binaries.sonarsource.com:443
-            github.com:443
-            npm.pkg.github.com:443
-            objects.githubusercontent.com:443
-            registry.npmjs.org:443
-            api.sonarcloud.io:443
-            analysis-sensorcache-eu-central-1-prod.s3.amazonaws.com:443
-            sc-cleancode-sensorcache-eu-central-1-prod.s3.amazonaws.com:443
-            scanner.sonarcloud.io:443
-            sonarcloud.io:443
-
       - name: Run SonarCloud analysis
         uses: myrotvorets/composite-actions/node-sonarscan@master
         with:

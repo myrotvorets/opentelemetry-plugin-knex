@@ -23,18 +23,6 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
-        with:
-          disable-sudo: true
-          egress-policy: block
-          allowed-endpoints: >
-            api.github.com:443
-            github.com:443
-            objects.githubusercontent.com:443
-            nodejs.org:443
-            registry.npmjs.org:443
-
       - name: Run code style check
         uses: myrotvorets/composite-actions/node-run-script@master
         with:
@@ -46,18 +34,6 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
-        with:
-          disable-sudo: true
-          egress-policy: block
-          allowed-endpoints: >
-            api.github.com:443
-            github.com:443
-            objects.githubusercontent.com:443
-            nodejs.org:443
-            registry.npmjs.org:443
-
       - name: Run type check
         uses: myrotvorets/composite-actions/node-run-script@master
         with:
