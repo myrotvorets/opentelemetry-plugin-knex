@@ -182,7 +182,7 @@ describe('KnexPlugin', function () {
             checkSpanAttributes(spans, 'raw', SpanStatusCode.OK, 'SELECT 2+2');
 
             equal(spans[0]!.spanContext().traceId, rootSpan.spanContext().traceId);
-            equal(spans[0]!.parentSpanId, rootSpan.spanContext().spanId);
+            equal(spans[0]!.parentSpanContext?.spanId, rootSpan.spanContext().spanId);
         });
     });
 
@@ -197,7 +197,7 @@ describe('KnexPlugin', function () {
             checkSpanAttributes(spans, 'select', SpanStatusCode.OK, 'select 2+2');
 
             equal(spans[0]!.spanContext().traceId, rootSpan.spanContext().traceId);
-            equal(spans[0]!.parentSpanId, rootSpan.spanContext().spanId);
+            equal(spans[0]!.parentSpanContext?.spanId, rootSpan.spanContext().spanId);
         });
     });
 
