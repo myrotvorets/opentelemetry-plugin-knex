@@ -3,7 +3,6 @@ import './instrumentation';
 
 import { trace } from '@opentelemetry/api';
 import { Knex, knex } from 'knex';
-import fetch from 'node-fetch';
 
 interface BreedModel {
     id: string;
