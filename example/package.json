@@ -13,8 +13,8 @@
   "dependencies": {
     "@myrotvorets/opentelemetry-plugin-knex": "file:..",
     "@opentelemetry/api": "^1.9.0",
-    "@opentelemetry/instrumentation-http": "^0.203.0",
-    "@opentelemetry/sdk-node": "^0.203.0",
+    "@opentelemetry/instrumentation-http": "^0.204.0",
+    "@opentelemetry/sdk-node": "^0.204.0",
     "better-sqlite3": "^12.2.0",
     "knex": "^3.1.0"
   },
