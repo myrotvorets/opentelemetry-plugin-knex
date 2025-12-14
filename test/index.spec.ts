@@ -205,8 +205,8 @@ describe('KnexPlugin', function () {
         const span = provider.getTracer('default').startSpan('test span');
         return context.with(trace.setSpan(context.active(), span), async () => {
             return Promise.all([
-                await connection.select(connection.raw('2+2')),
-                await connection.select(connection.raw('3+3')),
+                connection.select(connection.raw('2+2')),
+                connection.select(connection.raw('3+3')),
             ]).then(() => {
                 span.end();
 
