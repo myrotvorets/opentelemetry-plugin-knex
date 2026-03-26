@@ -19,4 +19,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Audit with NPM
-        uses: myrotvorets/composite-actions/node-package-audit@master
+        uses: myrotvorets/composite-actions/node-package-audit@0b8b877ead5e4e6718786803b91d295017964111 # master

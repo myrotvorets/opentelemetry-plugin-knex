@@ -24,7 +24,7 @@ jobs:
       contents: read
     steps:
       - name: Run code style check
-        uses: myrotvorets/composite-actions/node-run-script@master
+        uses: myrotvorets/composite-actions/node-run-script@0b8b877ead5e4e6718786803b91d295017964111 # master
         with:
           script: lint
 
@@ -35,6 +35,6 @@ jobs:
       contents: read
     steps:
       - name: Run type check
-        uses: myrotvorets/composite-actions/node-run-script@master
+        uses: myrotvorets/composite-actions/node-run-script@0b8b877ead5e4e6718786803b91d295017964111 # master
         with:
           script: typecheck
