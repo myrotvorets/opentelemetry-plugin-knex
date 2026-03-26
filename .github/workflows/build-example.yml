@@ -25,7 +25,7 @@ jobs:
       contents: read
     steps:
       - name: Prepare the source
-        uses: myrotvorets/composite-actions/build-test-nodejs@master
+        uses: myrotvorets/composite-actions/build-test-nodejs@0b8b877ead5e4e6718786803b91d295017964111 # master
         with:
           node-version: ${{ matrix.node }}
           run-tests: no
