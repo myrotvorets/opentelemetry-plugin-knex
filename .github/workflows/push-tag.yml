@@ -22,7 +22,7 @@ jobs:
       contents: read
     steps:
       - name: Build and test
-        uses: myrotvorets/composite-actions/build-test-nodejs@0b8b877ead5e4e6718786803b91d295017964111 # master
+        uses: myrotvorets/composite-actions/build-test-nodejs@c4c07ee643990a78097e4d7b1a1fe481b0f2c3f9 # master
 
   release:
     name: Prepare the release
