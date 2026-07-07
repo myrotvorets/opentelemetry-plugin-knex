@@ -1,7 +1,6 @@
-/* eslint-disable sonarjs/no-nested-functions */
 import { equal, notEqual } from 'node:assert/strict';
 import { SpanStatusCode, type TracerProvider, context, trace } from '@opentelemetry/api';
-import { AsyncHooksContextManager } from '@opentelemetry/context-async-hooks';
+import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks';
 import {
     BasicTracerProvider,
     InMemorySpanExporter,
@@ -38,7 +37,7 @@ describe('KnexPlugin', function () {
     let plugin: KnexInstrumentation;
     let connection: Knex;
 
-    let contextManager: AsyncHooksContextManager;
+    let contextManager: AsyncLocalStorageContextManager;
     let memoryExporter: InMemorySpanExporter;
     let provider: TracerProvider;
 
@@ -52,7 +51,7 @@ describe('KnexPlugin', function () {
     });
 
     beforeEach(function () {
-        contextManager = new AsyncHooksContextManager().enable();
+        contextManager = new AsyncLocalStorageContextManager().enable();
         context.setGlobalContextManager(contextManager);
         plugin.enable();
 
