@@ -20,7 +20,7 @@
   "typings": "dist/lib/index.d.ts",
   "devDependencies": {
     "@myrotvorets/eslint-config-myrotvorets-ts": "^3.1.1",
-    "@opentelemetry/context-async-hooks": "^2.9.0",
+    "@opentelemetry/context-async-hooks": "^3.0.0",
     "@opentelemetry/sdk-trace-base": "^2.9.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "^26.1.0",
